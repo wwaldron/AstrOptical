@@ -6,3 +6,5 @@ __all__ = ['reddening']
 
 # Local Impots
 from . import reddening
+from . import photometry
+from . import sextractor
