@@ -1,2 +1,4 @@
 # Python
 *.pyc
+hsttools.egg-info
+__pycache__
