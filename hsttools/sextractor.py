@@ -9,8 +9,17 @@ Created on Mon Sep  4 16:06:35 2017
 # Future Imports
 from __future__ import division
 
+# Numerics
+import numpy as np
+
 # Data Tables
 import pandas as pd
+
+# DS9 Regions
+import pyregion
+
+# Warnings
+import warnings
 
 
 # --- Read Catalog ------------------------------------------------------------
@@ -51,3 +60,37 @@ def readcatalog(fileName,ignoreVal=[99,'inf'],returnType='pandas'):
     
     # Return the Catalog
     return cat
+
+
+# --- Find sources in regions -------------------------------------------------
+def indentifysrcinreg(xSrc,ySrc,regFile):
+    '''Returns source mask array for sources that appear in the regions of
+    regFile (in image coordinates)
+    '''
+    
+    # Initialize Mask Array
+    msk = np.zeros(xSrc.size,dtype=np.bool)
+    
+    # Read in Regions
+    regs = pyregion.open(regFile)
+    if regs[0].coord_format != 'image':
+        raise ValueError('"image" format only supported region format.')
+    
+    # Identify Sources
+    for reg in regs:
+        if reg.name == 'circle':
+            x, y, r = reg.coord_list
+            inReg = ((xSrc - x)**2 + (ySrc - y)**2 <= r**2)
+            msk[inReg] = True
+        elif reg.name == 'ellipse':
+            x, y, a, b, t = reg.coord_list
+            X = (xSrc-x)*np.cos(np.radians(t)) + (ySrc-y)*np.sin(np.radians(t))
+            Y = (xSrc-x)*np.sin(np.radians(t)) - (ySrc-y)*np.cos(np.radians(t))
+            inReg = ((X/a)**2 + (Y/b)**2 <= 1);
+            msk[inReg] = True
+        else:
+            warnings.warn('Region Type "{}" not recognized.'.format(reg.name),
+                          RuntimeWarning)
+    
+    # Return
+    return msk

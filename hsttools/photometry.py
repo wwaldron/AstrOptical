@@ -23,8 +23,8 @@ from photutils           import aperture_photometry
 
 
 # --- Magnitude ---------------------------------------------------------------
-def magnitude(flux, zeroPoint, distToSrc=10, galExt=0, apCor=0):
-    '''
+def magnitude(flux, zeroPoint, galExt=0, apCor=0, kcor=0, distToSrc=10):
+    '''Calculates absolute and apparent magnitudes
     '''
     
     # If flux is an array, convert values below zero to NaN
@@ -32,7 +32,7 @@ def magnitude(flux, zeroPoint, distToSrc=10, galExt=0, apCor=0):
         flux[flux < 0] = np.NaN
     
     # Calculate Magnitude
-    mag    = -2.5*np.log10(flux) + zeroPoint - galExt - apCor
+    mag    = -2.5*np.log10(flux) + zeroPoint - galExt - apCor - kcor
     absMag = mag - 5*np.log10(distToSrc/10)
     
     return mag, absMag
@@ -40,7 +40,7 @@ def magnitude(flux, zeroPoint, distToSrc=10, galExt=0, apCor=0):
 
 # --- Zeropoint Calculations --------------------------------------------------
 def zeropoint(photFlam, photPlam):
-    '''
+    '''Calculates an HST Zeropoint in ST and AB magnitudes
     '''
     
     # Calculate Zeropoints
@@ -50,10 +50,31 @@ def zeropoint(photFlam, photPlam):
     return stMagZPt, abMagZpt
 
 
+# --- Drizzle Correction ------------------------------------------------------
+def drizcorrection(origPix,drizPix,pixFrac):
+    '''Roy Gal's DrizzlePac Magnitude Correction
+    '''
+    
+    # Get Correction Inputs
+    s   = drizPix/origPix
+    p   = pixFrac
+    sGp = (s >  p)
+    sLp = (s <= p)
+    
+    # Calculate correction
+    corrFact = np.zeros(origPix.shape)
+    corrFact[sGp]  = 1 - p[sGp]/(3*s[sGp]);
+    corrFact[sLp] = (s[sLp]/p[sLp])*(1 - (s[sLp]/(3*p[sLp])));
+    return corrFact
+
+
 # --- Simple Aperature Photometery --------------------------------------------
 def simpleapphot(fileName,pos,r,rI,rO,frame='image'):
+    '''Performs simple circular aperture photometry with local bg subtraction
     '''
-    '''
+    
+    if pos.ndim == 1:
+        pos = pos.reshape((-1,2))
     
     # Create Aperture
     frame = frame.lower()
@@ -78,8 +99,8 @@ def simpleapphot(fileName,pos,r,rI,rO,frame='image'):
     cirPhotTab = aperture_photometry(hdu,cirAps)
     annPhotTab = aperture_photometry(hdu,annAps )
     if frame == 'fk5':
-        cirAps = cirAps.to_pixel(WCS(fobj=hdu))
-        annAps = annAps.to_pixel(WCS(fobj=hdu))
+        cirAps = cirAps.to_pixel(WCS(header=hdu['SCI'].header))
+        annAps = annAps.to_pixel(WCS(header=hdu['SCI'].header))
     hdu.close()
     
     # Get Photometry as ndarray
