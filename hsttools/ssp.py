@@ -14,7 +14,7 @@ import pandas     as     pd
 from   os         import path as p
 
 # --- Create a pysynphot source from a pandas dataframe -----------------------
-def srcfromspectrum(fileName, distToSrc=np.sqrt(3/4/np.pi), redshift=0):
+def sb99specsrc(fileName, distToSrc=np.sqrt(3/4/np.pi), redshift=0):
     '''Returns the Starburst99 spectrum file as a pysynphot list of sources
     
     Starburst99 spectrum files are not convenient to work with by themselves.
@@ -75,5 +75,52 @@ def srcfromspectrum(fileName, distToSrc=np.sqrt(3/4/np.pi), redshift=0):
         srcs[i] = pysynphot.ArraySpectrum(wave=waves, flux=flux,
             waveunits='angstrom',fluxunits='flam')
         srcs[i] = srcs[i].redshift(redshift)
+    
+    return srcs, yrs
+
+
+# --- From BPASSv2 SED File ---------------------------------------------------
+def bpasssedsrc(fileName, distToSrc=np.sqrt(3/4/np.pi), redshift=0):
+    '''
+    '''
+    
+    return
+
+
+# --- From GALEV spec File ----------------------------------------------------
+def galevspecsrc(fileName,distToSrc=np.sqrt(3/4/np.pi), redshift=0):
+    '''
+    '''
+    
+    # Check File First
+    assert isinstance(fileName, str), 'fileName must be a string.'
+    assert p.exists(fileName),        'File ' + fileName + 'does not exist.'
+    
+    # Get commented parameters
+    lnNum = 0
+    with open(fileName,'r') as f:
+        for line in f:
+            if lnNum == 1:
+                lineList = line.split()[1:]
+                yrs      = [float(x) for x in lineList]
+                break
+            else:
+                lnNum += 1
+    
+    # Get Dataframe
+    names   = ['wave'] + yrs
+    yrs     = np.array(yrs)
+    specdf  = pd.read_table(fileName, delim_whitespace=True, names=names,
+                            comment='#', index_col=0)
+    
+    # Get the sources
+    srcs       = []
+    absFluxCor = (4/3)*np.pi*distToSrc*distToSrc
+    for yr in yrs:
+        absFlux  = specdf[yr]
+        flux     = absFlux / absFluxCor
+        srcs.append(pysynphot.ArraySpectrum(wave=specdf['wave'], flux=flux,
+            waveunits='angstrom', fluxunits='flam'))
+        srcs[-1] = srcs[-1].redshift(redshift)
     
     return srcs, yrs
