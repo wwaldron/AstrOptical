@@ -84,7 +84,29 @@ def bpasssedsrc(fileName, distToSrc=np.sqrt(3/4/np.pi), redshift=0):
     '''
     '''
     
-    return
+    # Check File First
+    assert isinstance(fileName, str), 'fileName must be a string.'
+    assert p.exists(fileName),        'File ' + fileName + 'does not exist.'
+    
+    # Declare Years
+    n   = np.arange(2,43)
+    yrs = 10**(6 + 0.1*(n-2))
+    
+    # Get Dataframe
+    names   = ['wave'] + yrs.tolist()
+    specdf  = pd.read_table(fileName, delim_whitespace=True, names=names)
+    
+    # Get the sources
+    srcs       = []
+    absFluxCor = (4/3)*np.pi*distToSrc*distToSrc
+    for yr in yrs:
+        absFlux  = specdf[yr].as_matrix()
+        flux     = (absFlux / absFluxCor) * 3.826e33
+        srcs.append(pysynphot.ArraySpectrum(wave=specdf['wave'].as_matrix(),
+            flux=flux, waveunits='angstrom', fluxunits='flam'))
+        srcs[-1] = srcs[-1].redshift(redshift)
+    
+    return srcs, yrs
 
 
 # --- From GALEV spec File ----------------------------------------------------
@@ -117,10 +139,10 @@ def galevspecsrc(fileName,distToSrc=np.sqrt(3/4/np.pi), redshift=0):
     srcs       = []
     absFluxCor = (4/3)*np.pi*distToSrc*distToSrc
     for yr in yrs:
-        absFlux  = specdf[yr]
+        absFlux  = specdf[yr].as_matrix()
         flux     = absFlux / absFluxCor
-        srcs.append(pysynphot.ArraySpectrum(wave=specdf['wave'], flux=flux,
-            waveunits='angstrom', fluxunits='flam'))
+        srcs.append(pysynphot.ArraySpectrum(wave=specdf['wave'].as_matrix(),
+            flux=flux, waveunits='angstrom', fluxunits='flam'))
         srcs[-1] = srcs[-1].redshift(redshift)
     
     return srcs, yrs
