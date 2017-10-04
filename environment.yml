@@ -1,0 +1,16 @@
+name: hst
+channels:
+- astropy
+- defaults
+dependencies:
+- python=2.7
+- ipython
+- spyder
+- numpy=1.13
+- astroscrappy=1.0.5
+- astropy=2.0.1
+- photutils=0.3.2
+- pysynphot=0.9.8.7
+- pyregion=1.2
+- pandas=0.20.3
+- xarray=0.9.6

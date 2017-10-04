@@ -14,6 +14,7 @@ import numpy as np
 
 # Data Tables
 import pandas as pd
+import xarray as xr
 
 # DS9 Regions
 import pyregion
@@ -57,6 +58,11 @@ def readcatalog(fileName,ignoreVal=[99,'inf'],returnType='pandas'):
     # If a numpy array is desired
     if returnType.lower() in ['numpy','array','ndarray']:
         cat = cat.as_matrix()
+    elif returnType.lower() == 'dataset':
+        cat = cat.to_xarray()
+    elif returnType.lower() == 'dataarray':
+        cat = xr.DataArray(cat)
+        cat = cat.rename({'dim_0':'observation','dim_1':'measurement'})
     
     # Return the Catalog
     return cat
