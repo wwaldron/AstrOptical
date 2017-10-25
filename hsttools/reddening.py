@@ -13,11 +13,13 @@ from __future__ import division
 from warnings import warn
 
 # Numerical Imports
-import numpy as np
+from numba import vectorize, float32, float64, optional
 
 
 # --- Calzetti 1997 -----------------------------------------------------------
-def cal97(wave, ebv=0.0):
+@vectorize([float32(float32),
+            float64(float64)])
+def cal97(wave):
     '''Calculates reddening according to Calzetti's 1997 Paper
     '''
     
@@ -36,14 +38,13 @@ def cal97(wave, ebv=0.0):
         # Calculate k value
         k = 1.73 - 0.1/wave + 1.86/wave/wave - 0.48/wave/wave/wave
     
-    # Reddening
-    red = ebv*k
-    
-    return k, red
+    return k
 
 
 # --- Calzetti 2000 -----------------------------------------------------------
-def cal00(wave, ebv=0.0, rvp=4.05):
+@vectorize([float32(float32,optional(float32)),
+            float64(float64,optional(float64))])
+def cal00(wave, rvp=4.05):
     '''Calculates reddening according to Calzetti's 2000 Paper
     '''
     
@@ -62,14 +63,13 @@ def cal00(wave, ebv=0.0, rvp=4.05):
         # k Value
         k = rvp + 2.659*(-1.857 + 1.04/wave)
     
-    # Reddening
-    red = ebv*k
-    
-    return k, red
+    return k
 
 
 # --- Cardelli 1989 -----------------------------------------------------------
-def car89(wave, ebv=0.0, rvp=3.1):
+@vectorize([float32(float32,optional(float32)),
+            float64(float64,optional(float64))])
+def car89(wave, rvp=3.1):
     '''Cardelli Milky Way reddening (1989)
     '''
     
@@ -83,8 +83,8 @@ def car89(wave, ebv=0.0, rvp=3.1):
             warn('Reddening is ill defined below 0.3 inverse microns.', RuntimeWarning)
         
         # Get a and b
-        a =  0.574*np.power(x,1.61)
-        b = -0.527*np.power(x,1.61)
+        a =  0.574*pow(x,1.61)
+        b = -0.527*pow(x,1.61)
     
     elif x < 3.3:
         
@@ -120,6 +120,5 @@ def car89(wave, ebv=0.0, rvp=3.1):
             
     # Calculate K
     k   = a + b*rvpI
-    red = ebv*k
     
-    return k, red
+    return k
