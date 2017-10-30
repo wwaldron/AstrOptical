@@ -50,6 +50,17 @@ def zeropoint(photFlam, photPlam):
     return stMagZPt, abMagZpt
 
 
+# --- Calculate Magnitude Error -----------------------------------------------
+def magerr(flux, fluxErr):
+    '''Calculates the magnitude error from the flux and flux error
+    '''
+    
+    # Float coeff = 2.5 / ln(10)
+    # Error Propogation is defined for natural log where photometry is defined
+    # for 2.5*log10(flux)
+    return 1.0857362047581294 * fluxErr / flux
+
+
 # --- Drizzle Correction ------------------------------------------------------
 def drizcorrection(origPix,drizPix,pixFrac):
     '''Roy Gal's DrizzlePac Magnitude Correction
