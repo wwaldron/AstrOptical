@@ -9,15 +9,48 @@ Created on Sat Sep  2 13:41:08 2017
 # Future Imports
 from __future__ import division
 
+# Meta
+__all__ = ['cal97','cal00','car89']
+
 # Python
 from warnings import warn
 
 # Numerical Imports
 import numpy as np
+from   numpy import frompyfunc as vec
+
+
+# frompyfuncd Functions
+def cal97(wave,ebv=0.0):
+    '''Calculates reddening according to Calzetti's 1997 Paper
+    '''
+    
+    # Function
+    vcal97 = vec(_cal97,2,2)
+    
+    return vcal97(wave,ebv)
+
+def cal00(wave,ebv=0.0,rvp=4.05):
+    '''Calculates reddening according to Calzetti's 2000 Paper
+    '''
+    
+    # Function
+    vcal00 = vec(_cal00,3,2)
+    
+    return vcal00(wave,ebv,rvp)
+
+def car89(wave,ebv=0.0,rvp=3.1):
+    '''Calculates reddening according to Cardelli's 1989 Paper
+    '''
+    
+    # Function
+    vcar89 = vec(_car89,3,2)
+    
+    return vcar89(wave,ebv,rvp)
 
 
 # --- Calzetti 1997 -----------------------------------------------------------
-def cal97(wave, ebv=0.0):
+def _cal97(wave, ebv=0.0):
     '''Calculates reddening according to Calzetti's 1997 Paper
     '''
     
@@ -43,7 +76,7 @@ def cal97(wave, ebv=0.0):
 
 
 # --- Calzetti 2000 -----------------------------------------------------------
-def cal00(wave, ebv=0.0, rvp=4.05):
+def _cal00(wave, ebv=0.0, rvp=4.05):
     '''Calculates reddening according to Calzetti's 2000 Paper
     '''
     
@@ -69,13 +102,12 @@ def cal00(wave, ebv=0.0, rvp=4.05):
 
 
 # --- Cardelli 1989 -----------------------------------------------------------
-def car89(wave, ebv=0.0, rvp=3.1):
+def _car89(wave, ebv=0.0, rvp=3.1):
     '''Cardelli Milky Way reddening (1989)
     '''
     
     # First, get the inverse params
     x    = 1/wave
-    rvpI = 1/rvp
     
     # Calculate a(x) and b(x)
     if x < 1.1:
@@ -115,11 +147,11 @@ def car89(wave, ebv=0.0, rvp=3.1):
         
         # Get a and b
         y = x - 8
-        a = -1.703 - 0.628*y + 0.137*y*y - 0.070*y*y*y
+        a = -1.073 - 0.628*y + 0.137*y*y - 0.070*y*y*y
         b = 13.670 + 4.257*y - 0.420*y*y + 0.374*y*y*y
             
     # Calculate K
-    k   = a + b*rvpI
-    red = ebv*k
+    k   = rvp*a + b
+    red = k * ebv
     
     return k, red
