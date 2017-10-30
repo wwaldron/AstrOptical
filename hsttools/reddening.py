@@ -69,7 +69,9 @@ def _cal97(wave, ebv=0.0):
         # Calculate k value
         k = 1.73 - 0.1/wave + 1.86/wave/wave - 0.48/wave/wave/wave
     
-    return k
+    red = k * ebv
+    
+    return k, red
 
 
 # --- Calzetti 2000 -----------------------------------------------------------
@@ -91,8 +93,10 @@ def _cal00(wave, ebv=0.0, rvp=4.05):
         
         # k Value
         k = rvp + 2.659*(-1.857 + 1.04/wave)
+        
+    red = k * ebv
     
-    return k
+    return k, red
 
 
 # --- Cardelli 1989 -----------------------------------------------------------
@@ -109,8 +113,8 @@ def _car89(wave, ebv=0.0, rvp=3.1):
             warn('Reddening is ill defined below 0.3 inverse microns.', RuntimeWarning)
         
         # Get a and b
-        a =  0.574*pow(x,1.61)
-        b = -0.527*pow(x,1.61)
+        a =  0.574*np.power(x,1.61)
+        b = -0.527*np.power(x,1.61)
     
     elif x < 3.3:
         
@@ -148,4 +152,4 @@ def _car89(wave, ebv=0.0, rvp=3.1):
     k   = rvp*a + b
     red = k * ebv
     
-    return k
+    return k, red
