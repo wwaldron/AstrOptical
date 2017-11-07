@@ -84,6 +84,9 @@ def simpleapphot(fileName,pos,r,rI,rO,frame='image'):
     '''Performs simple circular aperture photometry with local bg subtraction
     '''
     
+    # Check Type of pos first
+    if not isinstance(pos,np.ndarray): pos = np.array(pos)
+    
     if pos.ndim == 1:
         pos = pos.reshape((-1,2))
     
