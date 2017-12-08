@@ -79,6 +79,26 @@ def sb99specsrc(fileName, distToSrc=np.sqrt(3/4/np.pi), redshift=0):
     return srcs, yrs
 
 
+# --- Read Equivalent Width Files from SB99 -----------------------------------
+def sb99ewidth(fileName,outscale='linear'):
+    '''
+    '''
+    
+    # Import data first as pandas dataframe
+    # I don't like hard coding these col widths in, but Starburst99 doesn't
+    # have a simpler way right now to parse the data
+    assert isinstance(fileName, str), 'fileName must be a string.'
+    assert p.exists(fileName),        'File ' + fileName + 'does not exist.'
+    widthDF = pd.read_fwf(fileName,header=5,widths=([14] + 4*[10,9,9]))
+    
+    # Change Scales
+    if outscale.lower() == 'linear':
+        widthDF.iloc[:,1:] = 10**widthDF.iloc[:,1:]
+    
+    return widthDF
+    
+
+
 # --- From BPASSv2 SED File ---------------------------------------------------
 def bpasssedsrc(fileName, distToSrc=np.sqrt(3/4/np.pi), redshift=0):
     '''
