@@ -25,22 +25,21 @@ def createmask(fileName, sigclip=4.5, sigfrac=0.3,
     See astroscrappy.pyx for documentation on the parameters
     exposure is if the image is in counts/sec
     """
-    
+
     # Check file existance
     if not p.exists(fileName):
-        print("File " + fileName + " does not exist")
-        return
-    
+        raise IOError("File " + fileName + " does not exist")
+
     # Get the path to the image
     fileWOExt, exten = p.splitext(fileName)
     cleanName = fileWOExt + "_cleaned" + exten
-    
+
     # Read in the FITS image
     hduListIn   = fits.open(fileName)
-    
+
     # Change data to e instead of e/s
     inImg  = hduListIn[fitsExten].data*exposure + pssl
-    
+
     # Create the lacosmic object
     c = detect_cosmics(inImg, sigclip=sigclip, sigfrac=sigfrac,
                    objlim=objlim, gain=gain, readnoise=readnoise,
@@ -48,10 +47,10 @@ def createmask(fileName, sigclip=4.5, sigfrac=0.3,
                    sepmed=sepmed, cleantype=cleantype, fsmode=fsmode,
                    psfmodel=psfmodel, psffwhm=psffwhm, psfsize=psfsize,
                    psfk=psfk, psfbeta=psfbeta, verbose=verbose)
-    
+
     # Remove the added sky value
     outImg = (c[1] - pssl)/exposure
-    
+
     # Write out the mask and cleaned images
     primHdr = fits.PrimaryHDU(header=hduListIn['PRIMARY'].header)
     imgHdr     = fits.ImageHDU(data=outImg, header=hduListIn[fitsExten].header,
@@ -61,5 +60,5 @@ def createmask(fileName, sigclip=4.5, sigfrac=0.3,
     hduListOut = fits.HDUList([primHdr,imgHdr,mskHdr])
     hduListOut.writeto(cleanName, output_verify='warn', overwrite=True)
     hduListIn.close()
-    
+
     return

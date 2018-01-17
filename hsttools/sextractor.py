@@ -19,15 +19,17 @@ import xarray as xr
 # DS9 Regions
 import pyregion
 
-# Warnings
+# Python
 import warnings
+from   itertools import combinations as combins
+from   os        import path
 
 
 # --- Read Catalog ------------------------------------------------------------
 def readcatalog(fileName,ignoreVal=[99,'inf'],returnType='pandas'):
     '''
     '''
-    
+
     # Get the column names
     nVars = prevVarNum = 0
     varNames = []
@@ -49,12 +51,12 @@ def readcatalog(fileName,ignoreVal=[99,'inf'],returnType='pandas'):
                     varNames.append(varNames[-1])
                     nVars += 1
                 break
-    
+
     # Load in the table
     cat = pd.read_table(fileName, delim_whitespace=True, header=None,
                         names=varNames, index_col=False, na_values=ignoreVal,
                         comment='#')
-    
+
     # If a numpy array is desired
     if returnType.lower() in ['numpy','array','ndarray']:
         cat = cat.as_matrix()
@@ -63,25 +65,25 @@ def readcatalog(fileName,ignoreVal=[99,'inf'],returnType='pandas'):
     elif returnType.lower() == 'dataarray':
         cat = xr.DataArray(cat)
         cat = cat.rename({'dim_0':'observation','dim_1':'measurement'})
-    
+
     # Return the Catalog
     return cat
 
 
 # --- Find sources in regions -------------------------------------------------
-def indentifysrcinreg(xSrc,ySrc,regFile):
+def identifysrcinreg(xSrc,ySrc,regFile):
     '''Returns source mask array for sources that appear in the regions of
     regFile (in image coordinates)
     '''
-    
+
     # Initialize Mask Array
     msk = np.zeros(xSrc.size,dtype=np.bool)
-    
+
     # Read in Regions
     regs = pyregion.open(regFile)
     if regs[0].coord_format != 'image':
         raise ValueError('"image" format only supported region format.')
-    
+
     # Identify Sources
     for reg in regs:
         if reg.name == 'circle':
@@ -97,6 +99,55 @@ def indentifysrcinreg(xSrc,ySrc,regFile):
         else:
             warnings.warn('Region Type "{}" not recognized.'.format(reg.name),
                           RuntimeWarning)
-    
+
     # Return
     return msk
+
+
+# --- Find Uncommon Sources - ImageWise ---------------------------------------
+def finduncommonsrcs(catFiles, roiFile=None, maxPixSep=7, writeRegions=True,
+                     outDir=None, circRegRadius=5):
+    '''Used to identify sources that only occur in one image'''
+
+    # Read in the catalogs
+    cats  = []
+    nCats = len(catFiles)
+    for fileName in catFiles:
+        cats.append(readcatalog(fileName))
+
+    # Only Keep sources in ROI
+    if roiFile is not None:
+        for i, cat in enumerate(cats):
+            msk = identifysrcinreg(cat['X_IMAGE'], cat['Y_IMAGE'], roiFile)
+            cats[i] = cat.loc[msk, :]
+
+    # Go About identifying spurrious sources
+    goodInds = [np.zeros(cat.shape[0], dtype='bool') for cat in cats]
+    for i, j in combins(range(nCats), 2):
+
+        # Get XY from each Catalog
+        xI = cats[i]['X_IMAGE'].values.reshape(1, -1)
+        yI = cats[i]['Y_IMAGE'].values.reshape(1, -1)
+        xJ = cats[j]['X_IMAGE'].values.reshape(-1, 1)
+        yJ = cats[j]['Y_IMAGE'].values.reshape(-1, 1)
+
+        # Get Pairings
+        goodSrcPairs = ((xI - xJ)**2 + (yI - yJ)**2 <= maxPixSep**2)
+        goodI, goodJ = np.any(goodSrcPairs, 0), np.any(goodSrcPairs, 1)
+        goodInds[i] = np.logical_or(goodInds[i], goodI)
+        goodInds[j] = np.logical_or(goodInds[j], goodJ)
+
+    # Spurrious Mask and Region Output
+    spurMsk = tuple(np.logical_not(msk) for msk in goodInds)
+    for i, fileName in enumerate(catFiles):
+        dirName = outDir if outDir is not None else path.dirname(fileName)
+        outName = path.join(dirName, path.splitext(path.basename(fileName))[0]
+                            + '_uncommon.reg')
+        cat  = cats[i].loc[spurMsk[i], :]
+        with open(outName, 'w') as f:
+            f.write('image\n')
+            for x, y in zip(cat['X_IMAGE'], cat['Y_IMAGE']):
+                f.write('circle({}, {}, {})\n'.format(x, y, circRegRadius))
+
+    # Return
+    return cats, spurMsk
