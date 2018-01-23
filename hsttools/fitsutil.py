@@ -22,35 +22,33 @@ def fixirafcrfix(origFile,crFile):
     extension. This function moves the headers around and puts things in their
     proper place.
     """
-    
+
     # Check original file existance
     if not p.exists(origFile):
-        print("File " + origFile + " does not exist")
-        return
-    
+        raise IOError("File " + origFile + " does not exist")
+
     # Check cr file existance
     if not p.exists(crFile):
-        print("File " + crFile + " does not exist")
-        return
-    
+        raise IOError("File " + crFile + " does not exist")
+
     # Open Files
     origHDUList = fits.open(origFile)
     crHDUList   = fits.open(crFile)
-    
+
     # Create the Headers
     priHdr = fits.PrimaryHDU(header=origHDUList['PRIMARY'].header)
     imgHdr = fits.ImageHDU(data=crHDUList['PRIMARY'].data,
                            header=crHDUList['PRIMARY'].header,
                            name='SCI')
-    
+
     # Close FITS
     origHDUList.close()
     crHDUList.close()
-    
+
     # Create Header List
     outHDUList = fits.HDUList([priHdr,imgHdr])
     outHDUList.writeto(crFile, output_verify='warn', overwrite=True)
-    
+
     return
 
 
@@ -59,25 +57,25 @@ def creatermsimage(fileName, hduExt='WHT', scaleFact=1.):
     """
     Takes the square root inverse of a weight image to get the RMS
     """
-    
+
     # Check file existance
     if not p.exists(fileName):
         print("File " + fileName + " does not exist")
         return
-    
+
     # Get the path to the image
     fileWOExt, exten = p.splitext(fileName)
     rmsName = fileWOExt + "_rms" + exten
-    
+
     # Read in the FITS image
     hduListIn   = fits.open(fileName)
-    
+
     # Get the weight data
     whtData = hduListIn[hduExt].data
-    
+
     # Create the RMS Image
     rmsData = 1/sqrt(whtData * scaleFact)
-    
+
     # Create the RMS Image
     primHdr = fits.PrimaryHDU(header=hduListIn['PRIMARY'].header)
     imgHdr  = fits.ImageHDU(data=rmsData, header=hduListIn[hduExt].header,
@@ -85,5 +83,21 @@ def creatermsimage(fileName, hduExt='WHT', scaleFact=1.):
     hduListOut = fits.HDUList([primHdr,imgHdr])
     hduListOut.writeto(rmsName, output_verify='warn', overwrite=True)
     hduListIn.close()
-    
+
     return
+
+
+# --- Copy Header Keyword/Value -----------------------------------------------
+def copyheadervalue(fromFile, toFile, extension, keywords):
+    '''Copies the keyword/value pair in specified extension from first file to
+    second'''
+
+    # Open Files
+    ext = extension
+    with fits.open(fromFile) as fromHDU:
+        with fits.open(toFile, 'update') as toHDU:
+            if isinstance(keywords, str):
+                toHDU[ext].header[keywords] = fromHDU[ext].header[keywords]
+            else:
+                for key in keywords:
+                    toHDU[ext].header[key] = fromHDU[ext].header[key]
