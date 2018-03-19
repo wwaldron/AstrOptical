@@ -78,13 +78,12 @@ class SpectrumEvolution(object):
         # Make plot
         if ax is None:
             plt.figure()
-            ax = plt.axes()
-        ax.plot(self.measX[0] - self.measX[1],
-                self.measY[0] - self.measY[1],
-                **kwargs)
-
-        # Return
-        return ax
+            self.ax = plt.axes()
+        else:
+            self.ax = ax
+        return self.ax.plot(self.measX[0] - self.measX[1],
+                            self.measY[0] - self.measY[1],
+                            **kwargs)
 
     def makeobservation(self, observer, outUnit='ABMag'):
         '''Makes an observation of the spectrum through the years.'''
