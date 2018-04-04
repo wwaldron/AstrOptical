@@ -3,7 +3,10 @@
 
 # Metadata
 __all__ = ['cosmicray','fitsutil','photometry','sextractor','ssp',
-           'reddening','fitsio']
+           'reddening']
+import pkg_resources
+__version__ = pkg_resources.get_distribution('astroptical').version
+del pkg_resources
 
 # Local Impots
 from . import cosmicray
@@ -14,4 +17,4 @@ from . import ssp
 from . import reddening
 
 # Astropy Imports
-from astropy.io import fits as fitsio
+#from astropy.io import fits as fitsio  # Not sure whether ethical or good practice

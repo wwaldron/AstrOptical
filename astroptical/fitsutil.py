@@ -9,6 +9,9 @@ Created on Tue Sep  5 20:27:51 2017
 # Futures
 from __future__ import division
 
+# Metadata
+__all__ = ['fixirafcrfix', 'creatermsimage', 'copyheadervalue']
+
 # Imports
 from os         import path as p
 from astropy.io import fits

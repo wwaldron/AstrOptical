@@ -2,11 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # Imports
-from setuptools import setup
+from setuptools import setup, find_packages
 
 # Setup command
-setup(name='hsttools',
-      version='0.0',
-      description='Tools useful in HST data processing.',
+setup(name='astroptical',
+      version='0.1.0',
+      description='Tools useful in Optical Astronomy data processing.',
       author='Will Waldron',
-      packages=['hsttools'])
+      author_email='wvw0330@uah.edu',
+      packages=find_packages(),
+      zip_safe=True)

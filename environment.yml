@@ -1,11 +1,9 @@
-name: hst
+name: astropt
 channels:
 - astropy
 - defaults
+- conda-forge
 dependencies:
-- python=2.7
-- ipython
-- spyder
 - numpy=1.13
 - astroscrappy=1.0.5
 - astropy=2.0.1

@@ -6,22 +6,26 @@ Created on Tue Sep  5 20:23:19 2017
 @author: wwaldron
 """
 
+# Futures
 from __future__ import division
 
+# Metadata
+__all__ = ['createmask']
+
+# Imports
 from os import path as p
 from astroscrappy import detect_cosmics
 from astropy.io import fits
 from numpy import uint8
 
 # create a mask file of the detected cr pixels
-def createmask(fileName, sigclip=4.5, sigfrac=0.3,
-                   objlim=5.0, gain=1.0, readnoise=6.5,
-                   satlevel=65536.0, pssl=0.0, niter=4,
-                   sepmed=True, cleantype='meanmask', fsmode='median',
-                   psfmodel='gauss', psffwhm=2.5, psfsize=7,
-                   psfk=None, psfbeta=4.765, verbose=False, exposure=1.0,
-                   fitsExten='SCI'):
+def createmask(fileName, sigclip=4.5, sigfrac=0.3, objlim=5.0, gain=1.0,
+               readnoise=6.5, satlevel=65536.0, pssl=0.0, niter=4, sepmed=True,
+               cleantype='meanmask', fsmode='median', psfmodel='gauss',
+               psffwhm=2.5, psfsize=7, psfk=None, psfbeta=4.765, verbose=False,
+               exposure=1.0, fitsExten='SCI'):
     """
+    Wraps astroscrappy
     See astroscrappy.pyx for documentation on the parameters
     exposure is if the image is in counts/sec
     """

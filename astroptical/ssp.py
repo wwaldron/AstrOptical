@@ -9,6 +9,9 @@ Created on Sat Sep 16 14:45:35 2017
 # Future
 from   __future__ import division
 
+# Metadata
+__all__ = ['Starburst99Spectrum', 'BpassSpectrum', 'GalevSpectrum']
+
 # Classes
 from abc import abstractmethod
 
@@ -18,6 +21,7 @@ import numpy      as     np
 import pandas     as     pd
 from   os         import path as p
 import matplotlib.pyplot as plt
+
 
 # --- Base Class for Spectrums ------------------------------------------------
 class SpectrumEvolution(object):
@@ -119,6 +123,7 @@ class Starburst99Spectrum(SpectrumEvolution):
                                                     self.distToSrc,
                                                     self.redshift)
 
+
 # --- BPASS Spectrum ----------------------------------------------------------
 class BpassSpectrum(SpectrumEvolution):
     '''Class to hold BPASS runs'''
@@ -131,6 +136,7 @@ class BpassSpectrum(SpectrumEvolution):
                                                     self.distToSrc,
                                                     self.redshift)
 
+
 # --- GALEV Spectrum ----------------------------------------------------------
 class GalevSpectrum(SpectrumEvolution):
     '''Class to hold BPASS runs'''
@@ -142,6 +148,7 @@ class GalevSpectrum(SpectrumEvolution):
         self.spectrumList, self.years = galevspecsrc(self.fileName,
                                                      self.distToSrc,
                                                      self.redshift)
+
 
 # --- Create a pysynphot source from a pandas dataframe -----------------------
 def sb99specsrc(fileName, distToSrc=np.sqrt(3/4/np.pi), redshift=0):
@@ -226,7 +233,6 @@ def sb99ewidth(fileName,outscale='linear'):
         widthDF.iloc[:,1:] = 10**widthDF.iloc[:,1:]
 
     return widthDF
-
 
 
 # --- From BPASSv2 SED File ---------------------------------------------------

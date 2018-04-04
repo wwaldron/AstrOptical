@@ -9,6 +9,9 @@ Created on Mon Sep  4 16:06:35 2017
 # Future Imports
 from __future__ import division
 
+# Metadata
+__all__ = ['readcatalog', 'identifysrcinreg', 'finduncommonsrcs']
+
 # Numerics
 import numpy as np
 
