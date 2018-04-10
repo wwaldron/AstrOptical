@@ -16,6 +16,7 @@ __all__ = ['fixirafcrfix', 'creatermsimage', 'copyheadervalue']
 from os         import path as p
 from astropy.io import fits
 from numpy      import sqrt
+import photutils as pu
 
 
 # --- Fix IRAF's CRFix --------------------------------------------------------
@@ -104,3 +105,33 @@ def copyheadervalue(fromFile, toFile, extension, keywords):
             else:
                 for key in keywords:
                     toHDU[ext].header[key] = fromHDU[ext].header[key]
+
+
+# --- Remove Local Background -------------------------------------------------
+def removebg(fileName, box_size=64, extName='SCI', writeOutput=False, **bgKWs):
+    '''Local Background Removal of Fits File'''
+
+    # Input File Context Manager
+    with fits.open(fileName) as hdu:
+
+        # Get Data
+        data  = hdu[extName].data
+
+        # Subtract Bakground
+        data -= pu.Background2D(data, box_size, **bgKWs).background
+
+        # Save Output
+        if writeOutput:
+
+            # Overwrite Data
+            hdu[extName].data = data
+
+            # Get New File Name
+            newName, ext = p.splitext(fileName)
+            newName = newName + '_bg' + ext
+
+            # Write
+            hdu.writeto(newName)
+
+    # Return
+    return data
