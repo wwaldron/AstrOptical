@@ -3,3 +3,6 @@
 hsttools.egg-info
 __pycache__
 *.egg-info
+
+# VS Code
+.vscode
