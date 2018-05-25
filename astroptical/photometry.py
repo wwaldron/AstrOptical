@@ -78,8 +78,8 @@ def drizcorrection(origPix,drizPix,pixFrac):
 
     # Calculate correction
     corrFact = np.zeros(origPix.shape)
-    corrFact[sGp]  = 1 - p[sGp]/(3*s[sGp]);
-    corrFact[sLp] = (s[sLp]/p[sLp])*(1 - (s[sLp]/(3*p[sLp])));
+    corrFact[sGp]  = 1 - p[sGp]/(3*s[sGp])
+    corrFact[sLp] = (s[sLp]/p[sLp])*(1 - (s[sLp]/(3*p[sLp])))
     return corrFact
 
 
