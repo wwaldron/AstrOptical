@@ -43,7 +43,10 @@ def readcatalog(fileName,ignoreVal=[99,'inf'],returnType='pandas'):
                 varNum  = int(col[1])
                 varName = col[2]
                 for i in range(varNum - prevVarNum - 1):
-                    varNames.append(varNames[-1])
+                    if i == 0:
+                        dupVarName = varNames[-1]
+                        varNames[-1] = dupVarName + '.' +str(i)
+                    varNames.append(dupVarName + '.' + str(i + 1))
                     nVars += 1
                 varNames.append(varName)
                 nVars += 1
@@ -51,7 +54,10 @@ def readcatalog(fileName,ignoreVal=[99,'inf'],returnType='pandas'):
             else:
                 nCols = len(line.split())
                 for i in range(nCols - prevVarNum):
-                    varNames.append(varNames[-1])
+                    if i == 0:
+                        dupVarName = varNames[-1]
+                        varNames[-1] = dupVarName + '.' +str(i)
+                    varNames.append(dupVarName + '.' + str(i + 1))
                     nVars += 1
                 break
 
@@ -97,7 +103,7 @@ def identifysrcinreg(xSrc,ySrc,regFile):
             x, y, a, b, t = reg.coord_list
             X = (xSrc-x)*np.cos(np.radians(t)) + (ySrc-y)*np.sin(np.radians(t))
             Y = (xSrc-x)*np.sin(np.radians(t)) - (ySrc-y)*np.cos(np.radians(t))
-            inReg = ((X/a)**2 + (Y/b)**2 <= 1);
+            inReg = ((X/a)**2 + (Y/b)**2 <= 1)
             msk[inReg] = True
         else:
             warnings.warn('Region Type "{}" not recognized.'.format(reg.name),
