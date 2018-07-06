@@ -15,6 +15,7 @@ from . import photometry
 from . import sextractor
 from . import ssp
 from . import reddening
+from . import metrics
 
 # Astropy Imports
 #from astropy.io import fits as fitsio  # Not sure whether ethical or good practice
