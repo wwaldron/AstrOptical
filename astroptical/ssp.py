@@ -42,6 +42,32 @@ class SpectrumEvolution(ABC):
         if self.fileName is not None:
             self.read(self.fileName)
 
+    def __len__(self):
+        return len(self.years)
+
+    def __getitem__(self, i):
+        return (self.spectrumList[i], self.years[i])
+
+    def __add__(self, other):
+
+        # Error Checking
+        if (self.redshift != other.redshift or
+                self.distToSrc != other.distToSrc):
+            raise ValueError('Cannot concatonate two Spectrums with different '
+                             'redshifts or distances to the source.')
+
+        # Concatonate the Years and the Spectrums
+        concatYears = np.concatenate((self.years, other.years))
+        concatSpecs = self.spectrumList + other.spectrumList
+
+        # Make a new object
+        newSpec = type(self)(distToSrc=self.distToSrc, redshift=self.redshift)
+        newSpec.fileName = (self.fileName, other.fileName)
+        newSpec.spectrumList, newSpec.years = concatSpecs, concatYears
+        newSpec.sort()
+        return newSpec
+
+    # --- Abstract Methods ----------------------------------------------------
     @abstractmethod
     def read(self, fileName):
         '''To be implemented by child classes to read in necessary file
@@ -50,6 +76,21 @@ class SpectrumEvolution(ABC):
 
         '''
         pass
+
+    # --- Public Methods ------------------------------------------------------
+    def sort(self):
+
+        # Get the Sorting Necessities
+        srtInds = np.argsort(self.years)
+
+        # Sort
+        self.years = self.years[srtInds]
+        outSpecs = []
+        for ind in srtInds:
+            outSpecs.append(self.spectrumList[ind])
+        self.spectrumList = outSpecs
+
+        return
 
     def plottrack(self, cMagX, cMagY, ax=None, outUnit='ABMag', **kwargs):
         '''Plots the color/magnitude diagram track over the years
@@ -108,12 +149,6 @@ class SpectrumEvolution(ABC):
         for spec, _ in self:
             meas.append(psp.Observation(spec, observer).effstim(outUnit))
         return np.array(meas)
-
-    def __len__(self):
-        return len(self.years)
-
-    def __getitem__(self, i):
-        return (self.spectrumList[i], self.years[i])
 
 
 # --- Starburst99 Spectrum ----------------------------------------------------
