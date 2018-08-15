@@ -188,7 +188,7 @@ def sb99specsrc(fileName, distToSrc=np.sqrt(3/4/np.pi), redshift=0):
     specdf  = pd.read_fwf(fileName,header=5,widths=[11,17,12,13,26])
 
     # Convert to Array
-    specArr = specdf.as_matrix()
+    specArr = specdf.values
 
     # Get the length of one spectrum
     specLen = np.flatnonzero(np.diff(specdf['TIME [YR]']))[0] + 1
@@ -277,9 +277,9 @@ def bpasssedsrc(fileName, distToSrc=np.sqrt(3/4/np.pi), redshift=0):
     srcs       = []
     absFluxCor = (4/3)*np.pi*distToSrc*distToSrc
     for yr in yrs:
-        absFlux  = specdf[yr].as_matrix()
+        absFlux  = specdf[yr].values
         flux     = (absFlux / absFluxCor) * 3.826e33
-        srcs.append(psp.ArraySpectrum(wave=specdf['wave'].as_matrix(),
+        srcs.append(psp.ArraySpectrum(wave=specdf['wave'].values,
             flux=flux, waveunits='angstrom', fluxunits='flam'))
         srcs[-1] = srcs[-1].redshift(redshift)
 
@@ -335,9 +335,9 @@ def galevspecsrc(fileName,distToSrc=np.sqrt(3/4/np.pi), redshift=0):
     srcs       = []
     absFluxCor = (4/3)*np.pi*distToSrc*distToSrc
     for yr in yrs:
-        absFlux  = specdf[yr].as_matrix()
+        absFlux  = specdf[yr].values
         flux     = absFlux / absFluxCor
-        srcs.append(psp.ArraySpectrum(wave=specdf['wave'].as_matrix(),
+        srcs.append(psp.ArraySpectrum(wave=specdf['wave'].values,
             flux=flux, waveunits='angstrom', fluxunits='flam'))
         srcs[-1] = srcs[-1].redshift(redshift)
 
