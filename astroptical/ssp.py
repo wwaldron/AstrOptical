@@ -13,7 +13,7 @@ from   __future__ import division
 __all__ = ['Starburst99Spectrum', 'BpassSpectrum', 'GalevSpectrum']
 
 # Classes
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 
 # Other Imports
 import pysynphot  as     psp
@@ -24,14 +24,19 @@ import matplotlib.pyplot as plt
 
 
 # --- Base Class for Spectrums ------------------------------------------------
-class SpectrumEvolution(object):
+class SpectrumEvolution(ABC):
     '''Base class to define a generic spectrum evolution'''
 
+    # --- Python Builtins -----------------------------------------------------
     def __init__(self, fileName=None, distToSrc=np.sqrt(3/4/np.pi),
                  redshift=0):
         self.fileName  = fileName
         self.distToSrc = distToSrc
         self.redshift  = redshift
+
+        # Other Setup
+        self.years = None
+        self.spectrumList = None
 
         # Read file if necessary
         if self.fileName is not None:
