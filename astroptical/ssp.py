@@ -210,7 +210,8 @@ def sb99specsrc(fileName, distToSrc=np.sqrt(3/4/np.pi), redshift=0):
         absFlux = 10**specArr[:,2,i] # Total Flux in erg / sec / A
         flux    = absFlux / absFluxCor # Total Flux in erg / sec / A / cm / cm
         srcs[i] = psp.ArraySpectrum(wave=waves, flux=flux,
-            waveunits='angstrom',fluxunits='flam')
+                                    waveunits='angstrom',
+                                    fluxunits=psp.units.Flam)
         srcs[i] = srcs[i].redshift(redshift)
 
     return srcs, yrs
@@ -280,7 +281,7 @@ def bpasssedsrc(fileName, distToSrc=np.sqrt(3/4/np.pi), redshift=0):
         absFlux  = specdf[yr].values
         flux     = (absFlux / absFluxCor) * 3.826e33
         srcs.append(psp.ArraySpectrum(wave=specdf['wave'].values,
-            flux=flux, waveunits='angstrom', fluxunits='flam'))
+            flux=flux, waveunits='angstrom', fluxunits=psp.units.Flam))
         srcs[-1] = srcs[-1].redshift(redshift)
 
     return srcs, yrs
@@ -338,7 +339,7 @@ def galevspecsrc(fileName,distToSrc=np.sqrt(3/4/np.pi), redshift=0):
         absFlux  = specdf[yr].values
         flux     = absFlux / absFluxCor
         srcs.append(psp.ArraySpectrum(wave=specdf['wave'].values,
-            flux=flux, waveunits='angstrom', fluxunits='flam'))
+            flux=flux, waveunits='angstrom', fluxunits=psp.units.Flam))
         srcs[-1] = srcs[-1].redshift(redshift)
 
     return srcs, yrs
