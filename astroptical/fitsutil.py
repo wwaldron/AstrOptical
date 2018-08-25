@@ -83,7 +83,7 @@ def creatermsimage(fileName, hduExt='WHT', scaleFact=1.):
     # Create the RMS Image
     primHdr = fits.PrimaryHDU(header=hduListIn['PRIMARY'].header)
     imgHdr  = fits.ImageHDU(data=rmsData, header=hduListIn[hduExt].header,
-                               name='RMS')
+                            name='RMS')
     hduListOut = fits.HDUList([primHdr,imgHdr])
     hduListOut.writeto(rmsName, output_verify='warn', overwrite=True)
     hduListIn.close()

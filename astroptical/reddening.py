@@ -62,7 +62,7 @@ def _cal97(wave, ebv=0.0):
 
         # Calculate k value
         k = 4.88 + 2.656*(-2.156 + 1.509/wave - 0.198/wave/wave +
-                             0.011/wave/wave/wave)
+                          0.011/wave/wave/wave)
 
     else:
         if wave > 1.0:
@@ -87,7 +87,7 @@ def _cal00(wave, ebv=0.0, rvp=4.05):
 
         # Calculate k value
         k = rvp + 2.659*(-2.156 + 1.509/wave - 0.198/wave/wave +
-                             0.011/wave/wave/wave)
+                         0.011/wave/wave/wave)
 
     else:
         if wave > 2.20:

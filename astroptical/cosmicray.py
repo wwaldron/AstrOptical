@@ -46,11 +46,11 @@ def createmask(fileName, sigclip=4.5, sigfrac=0.3, objlim=5.0, gain=1.0,
 
     # Create the lacosmic object
     c = detect_cosmics(inImg, sigclip=sigclip, sigfrac=sigfrac,
-                   objlim=objlim, gain=gain, readnoise=readnoise,
-                   pssl=0., niter=niter,
-                   sepmed=sepmed, cleantype=cleantype, fsmode=fsmode,
-                   psfmodel=psfmodel, psffwhm=psffwhm, psfsize=psfsize,
-                   psfk=psfk, psfbeta=psfbeta, verbose=verbose)
+                       objlim=objlim, gain=gain, readnoise=readnoise,
+                       pssl=0., niter=niter,
+                       sepmed=sepmed, cleantype=cleantype, fsmode=fsmode,
+                       psfmodel=psfmodel, psffwhm=psffwhm, psfsize=psfsize,
+                       psfk=psfk, psfbeta=psfbeta, verbose=verbose)
 
     # Remove the added sky value
     outImg = (c[1] - pssl)/exposure

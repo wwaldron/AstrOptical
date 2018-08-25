@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+'''A toolkit to assist in visible astronomy'''
 
 # Metadata
 __all__ = ['cosmicray','fitsutil','photometry','sextractor','ssp',

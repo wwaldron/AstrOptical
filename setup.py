@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+'''Install script to install astroptical'''
 
 # Imports
 from setuptools import setup, find_packages
