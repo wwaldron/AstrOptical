@@ -21,6 +21,7 @@ import numpy      as     np
 import pandas     as     pd
 from   os         import path as p
 import matplotlib.pyplot as plt
+from glob2 import iglob
 
 
 # --- Module Variables --------------------------------------------------------
@@ -242,6 +243,40 @@ class GalevSpectrum(SpectrumEvolution):
                                                      self.redshift)
 
 
+# --- MappingsV Spectrum ------------------------------------------------------
+class MappingsVSpectrum(SpectrumEvolution):
+    '''Class to hold MappingsV Output'''
+
+    # --- Python Builtins -----------------------------------------------------
+    def __init__(self, fileName=None, distToSrc=DEFAULT_DIST,
+                 redshift=0, years=None, sbSpec=None):
+
+        # Run SpecEv init without a fileName to load all the meta-data
+        # then add the years then load file if exists.
+        super(MappingsVSpectrum, self).__init__(None, distToSrc, redshift)
+        self.years = years
+        self.sbSpec = sbSpec
+        if fileName is not None:
+            self.read(fileName, sbSpec)
+
+    # -- Concretions ----------------------------------------------------------
+    def read(self, fileName, sbSpec=None):
+        '''Reads a **directory** of MappingsV files to get the spectrum
+        evolution
+
+        Parameters
+        ----------
+        fileName : str
+            A glob pattern for the NFN files
+
+        '''
+
+        self.fileName = fileName
+        self.sbSpec = sbSpec
+        self.spectrumList = mapspecsrc(fileName, self.distToSrc,self.redshift,
+                                       sbSpec)
+
+
 # --- Create a pysynphot source from a pandas dataframe -----------------------
 def sb99specsrc(fileName, distToSrc=DEFAULT_DIST, redshift=0):
     '''Returns the Starburst99 spectrum file as a pysynphot list of sources
@@ -435,3 +470,74 @@ def galevspecsrc(fileName,distToSrc=DEFAULT_DIST, redshift=0):
         srcs[-1] = srcs[-1].redshift(redshift)
 
     return srcs, yrs
+
+
+# --- Read the MappingsV Files ------------------------------------------------
+def mapspecsrc(fileName, distToSrc=DEFAULT_DIST, redshift=0, sbSpec=None):
+    '''Returns the MappingsV spectrum files as a pysynphot list of sources
+
+    Parameters
+    ----------
+    dirName : str
+        The glob pattern for the NFN files.
+    distToSrc : float, optional
+        The distance from the observer to the source in [cm]. Do not pass in an
+        argument if total flux is desired.
+
+    Returns
+    -------
+    srcs : list
+        The each element in the list is a
+        pysynphot.spectrum.ArraySourceSpectrum object that corresponds by index
+        to the years in yrs. The units of the object are in
+        flam=[erg/s/cm/cm/A].
+
+    '''
+
+    # Get the File Iterator
+    fileIt = iglob(fileName)
+
+    # Read in the Data
+    srcs = []
+    absFluxCor = (4/3)*np.pi*distToSrc*distToSrc
+    for fileName in sorted(fileIt):
+
+        # Load Mappings File
+        mapDF = pd.read_table(fileName, delim_whitespace=True, header=None,
+                              names=['wave', 'flux'], skiprows=9, skipfooter=1,
+                              engine='python')
+        mpFnu = mapDF['flux'].values/mapDF['wave'].values  # nuFnu --> Fnu
+        mpFnu /= absFluxCor  # May have to remove since MP already defines
+        mpSpec = psp.ArraySpectrum(mapDF['wave'].values, mpFnu,
+                                   waveunits=psp.units.Hz,
+                                   fluxunits=psp.units.Fnu).redshift(redshift)
+        mpSpec.convert(psp.units.Angstrom)
+        mpSpec.convert(psp.units.Flam)
+        srcs.append(mpSpec)
+
+    # MappingsV changes the scale of the spectrum (compared to  Starburst99)
+    # for some reason. Therefore, this is an attempt to put them on the same
+    # scale if they should be.
+    if sbSpec is not None:
+        pivotFreq = 4.9782e+14
+        for i, (mpSrc, sbSrc) in enumerate(zip(srcs, sbSpec.spectrumList)):
+
+            # Convert Both
+            mpSrc = mpSrc.redshift(0)
+            mpSrc.convert(psp.units.Hz); mpSrc.convert(psp.units.Fnu)
+            sbSrc.convert(psp.units.Hz); sbSrc.convert(psp.units.Fnu)
+
+            # Fix the Flux
+            mFact = sbSrc.sample(pivotFreq)/mpSrc.sample(pivotFreq)
+            mpWave, mpFlux = mpSrc.getArrays()
+            mpFlux *= mFact
+            mpSrc = psp.ArraySpectrum(mpWave, mpFlux,
+                                      waveunits=psp.units.Hz,
+                                      fluxunits=psp.units.Fnu).redshift(redshift)
+
+            # Convert Back
+            mpSrc.convert(psp.units.Angstrom); mpSrc.convert(psp.units.Flam)
+            sbSrc.convert(psp.units.Angstrom); sbSrc.convert(psp.units.Flam)
+            srcs[i] = mpSrc
+
+    return srcs
