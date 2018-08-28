@@ -38,14 +38,14 @@ class SpectrumEvolution(ABC):
         self.__redshift = None
         self.__distToSrc = None
 
+        # Other Setup
+        self.years = None
+        self.spectrumList = None
+
         # Public
         self.fileName  = fileName
         self.distToSrc = distToSrc
         self.redshift  = redshift
-
-        # Other Setup
-        self.years = None
-        self.spectrumList = None
 
         # Read file if necessary
         if self.fileName is not None:
@@ -91,7 +91,7 @@ class SpectrumEvolution(ABC):
             # Set the Redshift of the Spectrum
             if self.spectrumList is not None:
                 for i, spec in enumerate(self.spectrumList):
-                    self.spectrumList[i] = spec.redshift(self.__redshift)
+                    self.spectrumList[i] = spec.redshift(self.redshift)
 
     @property
     def distToSrc(self):
@@ -102,7 +102,7 @@ class SpectrumEvolution(ABC):
 
         # Set the Distance if not the same as current
         if self.__distToSrc != value:
-            oldVal = DEFAULT_DIST if self.__distToSrc is None else self.__distToSrc
+            oldVal = DEFAULT_DIST if self.distToSrc is None else self.distToSrc
             self.__distToSrc = value
 
             # Set the Distance to the Spectrum
