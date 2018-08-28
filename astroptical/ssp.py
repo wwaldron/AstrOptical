@@ -519,24 +519,26 @@ def mapspecsrc(fileName, distToSrc=DEFAULT_DIST, redshift=0, sbSpec=None):
     # for some reason. Therefore, this is an attempt to put them on the same
     # scale if they should be.
     if sbSpec is not None:
+        if sbSpec.redshift != redshift:
+            raise ValueError('Starburst99 spectrum must have the same redshift')
         pivotFreq = 4.9782e+14
         for i, (mpSrc, sbSrc) in enumerate(zip(srcs, sbSpec.spectrumList)):
 
             # Convert Both
-            mpSrc0 = mpSrc.redshift(0); sbSrc0 = sbSrc.redshift(0)
-            mpSrc0.convert(psp.units.Hz); mpSrc0.convert(psp.units.Fnu)
-            sbSrc0.convert(psp.units.Hz); sbSrc0.convert(psp.units.Fnu)
+            mpSrc.convert(psp.units.Hz); mpSrc.convert(psp.units.Fnu)
+            sbSrc.convert(psp.units.Hz); sbSrc.convert(psp.units.Fnu)
 
             # Fix the Flux
-            mFact = sbSrc0.sample(pivotFreq)/mpSrc0.sample(pivotFreq)
-            mpWave, mpFlux = mpSrc0.getArrays()
+            mFact = sbSrc.sample(pivotFreq)/mpSrc.sample(pivotFreq)
+            mpWave, mpFlux = mpSrc.getArrays()
             mpFlux *= mFact
             mpSrc = psp.ArraySpectrum(mpWave, mpFlux,
                                       waveunits=psp.units.Hz,
-                                      fluxunits=psp.units.Fnu).redshift(redshift)
+                                      fluxunits=psp.units.Fnu)
 
             # Convert Back
             mpSrc.convert(psp.units.Angstrom); mpSrc.convert(psp.units.Flam)
+            sbSrc.convert(psp.units.Angstrom); sbSrc.convert(psp.units.Flam)
             srcs[i] = mpSrc
 
     return srcs
