@@ -23,13 +23,22 @@ from   os         import path as p
 import matplotlib.pyplot as plt
 
 
+# --- Module Variables --------------------------------------------------------
+DEFAULT_DIST = np.sqrt(3/4/np.pi)
+
+
 # --- Base Class for Spectrums ------------------------------------------------
 class SpectrumEvolution(ABC):
     '''Base class to define a generic spectrum evolution'''
 
     # --- Python Builtins -----------------------------------------------------
-    def __init__(self, fileName=None, distToSrc=np.sqrt(3/4/np.pi),
+    def __init__(self, fileName=None, distToSrc=DEFAULT_DIST,
                  redshift=0):
+        #Private
+        self.__redshift = None
+        self.__distToSrc = None
+
+        # Public
         self.fileName  = fileName
         self.distToSrc = distToSrc
         self.redshift  = redshift
@@ -66,6 +75,49 @@ class SpectrumEvolution(ABC):
         newSpec.spectrumList, newSpec.years = concatSpecs, concatYears
         newSpec.sort()
         return newSpec
+
+    # --- Set/Get Methods -----------------------------------------------------
+    @property
+    def redshift(self):
+        return self.__redshift
+
+    @redshift.setter
+    def redshift(self, value):
+
+        # Set the Redshift if not the Same as Current
+        if self.__redshift != value:
+            self.__redshift = value
+
+            # Set the Redshift of the Spectrum
+            if self.spectrumList is not None:
+                for i, spec in enumerate(self.spectrumList):
+                    self.spectrumList[i] = spec.redshift(self.__redshift)
+
+    @property
+    def distToSrc(self):
+        return self.__distToSrc
+
+    @distToSrc.setter
+    def distToSrc(self, value):
+
+        # Set the Distance if not the same as current
+        if self.__distToSrc != value:
+            oldVal = DEFAULT_DIST if self.__distToSrc is None else self.__distToSrc
+            self.__distToSrc = value
+
+            # Set the Distance to the Spectrum
+            if self.spectrumList is not None:
+                oldVal **= 2
+                oldVal  *= 4*np.pi/3
+                newVal   = (4*np.pi/3)*value**2
+                for i, spec in enumerate(self.spectrumList):
+                    waves, flux = spec.getArrays()
+                    flux *= oldVal/newVal
+                    spec = psp.ArraySpectrum(wave=waves, flux=flux,
+                                             waveunits=spec.waveunits,
+                                             fluxunits=spec.fluxunits)
+                    self.spectrumList[i] = spec.redshift(self.__redshift)
+
 
     # --- Abstract Methods ----------------------------------------------------
     @abstractmethod
@@ -191,7 +243,7 @@ class GalevSpectrum(SpectrumEvolution):
 
 
 # --- Create a pysynphot source from a pandas dataframe -----------------------
-def sb99specsrc(fileName, distToSrc=np.sqrt(3/4/np.pi), redshift=0):
+def sb99specsrc(fileName, distToSrc=DEFAULT_DIST, redshift=0):
     '''Returns the Starburst99 spectrum file as a pysynphot list of sources
 
     Starburst99 spectrum files are not convenient to work with by themselves.
@@ -277,7 +329,7 @@ def sb99ewidth(fileName,outscale='linear'):
 
 
 # --- From BPASSv2 SED File ---------------------------------------------------
-def bpasssedsrc(fileName, distToSrc=np.sqrt(3/4/np.pi), redshift=0):
+def bpasssedsrc(fileName, distToSrc=DEFAULT_DIST, redshift=0):
     '''Returns the BPASS spectrum file as a pysynphot list of sources
 
     Parameters
@@ -328,7 +380,7 @@ def bpasssedsrc(fileName, distToSrc=np.sqrt(3/4/np.pi), redshift=0):
 
 
 # --- From GALEV spec File ----------------------------------------------------
-def galevspecsrc(fileName,distToSrc=np.sqrt(3/4/np.pi), redshift=0):
+def galevspecsrc(fileName,distToSrc=DEFAULT_DIST, redshift=0):
     '''Returns the GALEV spectrum file as a pysynphot list of sources
 
     Parameters
