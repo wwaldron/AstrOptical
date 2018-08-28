@@ -523,13 +523,13 @@ def mapspecsrc(fileName, distToSrc=DEFAULT_DIST, redshift=0, sbSpec=None):
         for i, (mpSrc, sbSrc) in enumerate(zip(srcs, sbSpec.spectrumList)):
 
             # Convert Both
-            mpSrc = mpSrc.redshift(0)
-            mpSrc.convert(psp.units.Hz); mpSrc.convert(psp.units.Fnu)
-            sbSrc.convert(psp.units.Hz); sbSrc.convert(psp.units.Fnu)
+            mpSrc0 = mpSrc.redshift(0); sbSrc0 = sbSrc.redshift(0)
+            mpSrc0.convert(psp.units.Hz); mpSrc0.convert(psp.units.Fnu)
+            sbSrc0.convert(psp.units.Hz); sbSrc0.convert(psp.units.Fnu)
 
             # Fix the Flux
-            mFact = sbSrc.sample(pivotFreq)/mpSrc.sample(pivotFreq)
-            mpWave, mpFlux = mpSrc.getArrays()
+            mFact = sbSrc0.sample(pivotFreq)/mpSrc0.sample(pivotFreq)
+            mpWave, mpFlux = mpSrc0.getArrays()
             mpFlux *= mFact
             mpSrc = psp.ArraySpectrum(mpWave, mpFlux,
                                       waveunits=psp.units.Hz,
@@ -537,7 +537,6 @@ def mapspecsrc(fileName, distToSrc=DEFAULT_DIST, redshift=0, sbSpec=None):
 
             # Convert Back
             mpSrc.convert(psp.units.Angstrom); mpSrc.convert(psp.units.Flam)
-            sbSrc.convert(psp.units.Angstrom); sbSrc.convert(psp.units.Flam)
             srcs[i] = mpSrc
 
     return srcs
