@@ -168,25 +168,22 @@ class SpectrumEvolution(ABC):
 
         # Get measurements
         if isinstance(cMagX, (tuple, list)):
-            self.measX = (self.makeobservation(cMagX[0], outUnit),
-                          self.makeobservation(cMagX[1], outUnit))
+            measX = self.makeobservation(cMagX[0], outUnit) - \
+                    self.makeobservation(cMagX[1], outUnit)
         else:
-            self.measX = (self.makeobservation(cMagX,    outUnit), 0)
+            measX = self.makeobservation(cMagX,    outUnit)
         if isinstance(cMagY, (tuple, list)):
-            self.measY = (self.makeobservation(cMagY[0], outUnit),
-                          self.makeobservation(cMagY[1], outUnit))
+            measY = self.makeobservation(cMagY[0], outUnit) - \
+                    self.makeobservation(cMagY[1], outUnit)
         else:
-            self.measY = (self.makeobservation(cMagY,    outUnit), 0)
+            measY = self.makeobservation(cMagY,    outUnit)
 
         # Make plot
         if ax is None:
             plt.figure()
-            self.ax = plt.axes()
-        else:
-            self.ax = ax
-        return self.ax.plot(self.measX[0] - self.measX[1],
-                            self.measY[0] - self.measY[1],
-                            **kwargs)
+            ax = plt.axes()
+
+        return ax.plot(measX, measY, **kwargs)
 
     def makeobservation(self, observer, outUnit='ABMag'):
         '''Makes an observation of the spectrum through the years.'''
