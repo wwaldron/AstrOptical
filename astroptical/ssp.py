@@ -18,10 +18,14 @@ from abc import abstractmethod, ABC
 # Other Imports
 import pysynphot  as     psp
 import numpy      as     np
+import scipy      as     sp
 import pandas     as     pd
 from   os         import path as p
 import matplotlib.pyplot as plt
 from glob2 import iglob
+
+# Local Imports
+from astroptical.metrics import weuclidean
 
 
 # --- Module Variables --------------------------------------------------------
@@ -168,15 +172,13 @@ class SpectrumEvolution(ABC):
 
         # Get measurements
         if isinstance(cMagX, (tuple, list)):
-            measX = self.makeobservation(cMagX[0], outUnit) - \
-                    self.makeobservation(cMagX[1], outUnit)
+            measX = self._getcolor(cMagX, outUnit)
         else:
-            measX = self.makeobservation(cMagX,    outUnit)
+            measX = self.makeobservation(cMagX, outUnit)
         if isinstance(cMagY, (tuple, list)):
-            measY = self.makeobservation(cMagY[0], outUnit) - \
-                    self.makeobservation(cMagY[1], outUnit)
+            measY = self._getcolor(cMagY)
         else:
-            measY = self.makeobservation(cMagY,    outUnit)
+            measY = self.makeobservation(cMagY, outUnit)
 
         # Make plot
         if ax is None:
@@ -199,6 +201,55 @@ class SpectrumEvolution(ABC):
         for spec, _ in self:
             meas.append(psp.Observation(spec, observer).effstim(outUnit))
         return np.array(meas)
+
+    def _getcolor(self, colorFilts, outUnit='ABMag'):
+        return self.makeobservation(colorFilts[0], outUnit) - \
+               self.makeobservation(colorFilts[1], outUnit)
+
+    def calcobsage(self, colorFilts, obs, err=None, nInterpYrs=1000):
+        '''Calculates the age of the observations based on the model
+
+        Parameters
+        ----------
+        colorFilts : iterable
+            An iterable of arbitrary length that contains 2-tuples of
+            PySynPhot Bandpass filters.
+        obs : ndarray
+            An M x N array where M is the number of color observations and N is
+            the same as the length of color filt pairs.
+        err : ndarray
+            An M x N array where M is the number of error observations and N is
+            the same as the length of color filt pairs.
+
+        Returns
+        -------
+        ages : ndarray
+
+        '''
+
+        # Checks
+        if len(colorFilts) != obs.shape[1]:
+            raise ValueError('The number of columns (colors) in obs must '
+                             'match the number of filter pairs in colorFilts.')
+        if err is not None:
+            if len(colorFilts) != obs.shape[1]:
+                raise ValueError('The number of columns (colors) in err must '
+                                 'match the number of filter pairs in '
+                                 'colorFilts.')
+
+        # Get the Model colors
+        modColors = np.array([self._getcolor(filts) for filts in colorFilts]).T
+
+        # Interpolate the model colors for finer resolution
+        intYrs = np.logspace(self.years.min(), self.years.max(), nInterpYrs)
+        interpolator = sp.interpolate.interp1d(self.years, modColors, axis=0)
+        modColors = interpolator(intYrs)
+
+        # Now find the matches
+        dists = weuclidean(modColors, obs, wY=err)
+        minDistInds = np.nanargmin(dists, 0)
+        return intYrs[minDistInds]
+
 
 
 # --- Starburst99 Spectrum ----------------------------------------------------
