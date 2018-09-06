@@ -241,8 +241,11 @@ class SpectrumEvolution(ABC):
         modColors = np.array([self._getcolor(filts) for filts in colorFilts]).T
 
         # Interpolate the model colors for finer resolution
-        intYrs = np.logspace(self.years.min(), self.years.max(), nInterpYrs)
-        interpolator = sp.interpolate.interp1d(self.years, modColors, axis=0)
+        intYrs = np.logspace(np.log10(self.years.min()),
+                             np.log10(self.years.max()), nInterpYrs)
+        interpolator = sp.interpolate.interp1d(self.years, modColors, axis=0,
+                                               bounds_error=False,
+                                               fill_value='extrapolate')
         modColors = interpolator(intYrs)
 
         # Now find the matches
