@@ -12,5 +12,5 @@ setup(name='astroptical',
       author='Will Waldron',
       author_email='wvw0330@uah.edu',
       packages=find_packages(),
-      scripts=['bin/sextweak.py'],
+      scripts=['bin/sextweak'],
       zip_safe=True)
