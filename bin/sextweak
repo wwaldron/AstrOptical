@@ -208,7 +208,7 @@ def alignimgs(fileList, refCat, updateHdr=False, refCols=(1, 2),
     for fName in glob.iglob('residuals*.png'): os.remove(fName)
 
 # --- Final Drizzle -----------------------------------------------------------
-def finaldriz(fileList):
+def finaldriz(fileList, pixScl=None):
     """Drizzles all similar files together"""
 
     # Set the Options
@@ -217,7 +217,11 @@ def finaldriz(fileList):
         'preserve' : False,
         'clean' : True,
         'build' : True,
-        'num_cores' : cpu_count()//2
+        'num_cores' : cpu_count()//2,
+        'final_wht_type' : 'IVM',
+        'final_wcs' : True,
+        'final_rot' : 0.0,
+        'final_scale' : pixScl
     }
 
     # Get File Associations
@@ -230,8 +234,32 @@ def finaldriz(fileList):
         fAssocs[idStr].append(fName)
 
     # Run AstroDrizzle
-    for idStr in fAssocs:
+    for i, idStr in enumerate(fAssocs):
+
+        # Set More Options Based on Number of Files
+        nFiles = len(fAssocs[idStr])
+        asOpts['combine_type'] = 'minmed' if nFiles <= 6 else 'median'
+
+        # Options Based on Median
+        if asOpts['combine_type'] == 'minmed':
+            asOpts['combine_nhigh'] = 0
+        else:
+            asOpts['combine_nhigh'] = 1 + nFiles//10
+            # If the (number of files - combine_nhigh) is even, add another to
+            # nHigh
+            if not ((nFiles - asOpts['combine_nhigh']) % 2):
+                asOpts['combine_nhigh'] += 1
+
+        # Run AstroDrizzle
         AstroDrizzle(fAssocs[idStr], output=idStr, **asOpts)
+
+        # Final WCS
+        if not i:
+            firstImg = glob.glob(idStr + '_dr?.fits')[0]
+            asOpts['final_refimage'] = firstImg
+            with fits.open(firstImg) as fid:
+                asOpts['final_outnx'] = fid[1].header['NAXIS1']
+                asOpts['final_outny'] = fid[1].header['NAXIS2']
 
 
 # --- Main Script -------------------------------------------------------------
@@ -255,6 +283,8 @@ if __name__ == '__main__':
     prsr.add_argument('-l', '--log', metavar='FILE', type=str,
                       help='Save the log to a file (does not change STDOUT '
                            'verbosity)')
+    prsr.add_argument('-p', '--pixscl', metavar='X', type=float, default=None,
+                      help='The output pixel scale of AstroDrizzle')
     verb = prsr.add_mutually_exclusive_group()
     verb.add_argument('-v', '--verbose', action='count', default=0,
                       help='Set the verbosity level')
@@ -345,7 +375,7 @@ if __name__ == '__main__':
         if (args.final_drizzle or
                 input('Run final drizzle [y,n]? ').lower() == 'y'):
             log.info('Running Final Drizzle\n')
-            finaldriz(args.files)
+            finaldriz(args.files, args.pixscl)
 
     # --- Run Clean Up --------------------------------------------------------
     if args.clean:
