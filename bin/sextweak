@@ -229,7 +229,8 @@ def finaldriz(fileList, pixScl=None):
     for fName in fileList:
         with fits.open(fName) as fid:
             hdr = fid[0].header
-            idStr = '-'.join([hdr['INSTRUME'], hdr['FILTER']])
+            idStr = '-'.join([hdr['INSTRUME'], hdr['FILTER'], hdr['ASN_ID']])
+            idStr = idStr.upper()
         if idStr not in fAssocs: fAssocs[idStr] = []
         fAssocs[idStr].append(fName)
 
@@ -254,7 +255,7 @@ def finaldriz(fileList, pixScl=None):
         AstroDrizzle(fAssocs[idStr], output=idStr, **asOpts)
 
         # Final WCS
-        if not i:
+        if not bool(i):
             firstImg = glob.glob(idStr + '_dr?.fits')[0]
             asOpts['final_refimage'] = firstImg
             with fits.open(firstImg) as fid:
