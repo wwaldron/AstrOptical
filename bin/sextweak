@@ -17,6 +17,7 @@ from argparse import ArgumentParser
 from multiprocessing import cpu_count
 
 # 3rd Party Imports
+import numpy as np
 from stsci.tools import teal
 from astropy.io import fits
 from drizzlepac.tweakreg import TweakReg
