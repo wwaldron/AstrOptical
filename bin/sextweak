@@ -228,6 +228,20 @@ def _driztype(fileList, asOpts):
             asOpts['combine_nhigh'] += 1
 
 
+# --- Assign Ref Image --------------------------------------------------------
+def _refimg(fileGlob, asOpts):
+    """Assigns a ref image based on the fileGlob"""
+
+    # Get the First Image
+    firstImg = glob.glob(fileGlob)[0]
+
+    # Assign Options
+    asOpts['final_refimage'] = firstImg
+    with fits.open(firstImg) as fid:
+        asOpts['final_outnx'] = fid[1].header['NAXIS1']
+        asOpts['final_outny'] = fid[1].header['NAXIS2']
+
+
 # --- Final Drizzle -----------------------------------------------------------
 def finaldriz(fileList, pixScl=None, nFinalSubs=None):
     """Drizzles all similar files together"""
@@ -257,11 +271,11 @@ def finaldriz(fileList, pixScl=None, nFinalSubs=None):
         if idStr not in fAssocs: fAssocs[idStr] = []
         fAssocs[idStr].append(fName)
 
-    # Run AstroDrizzle
-    for i, idStr in enumerate(fAssocs):
+    # Run AstroDrizzle by Subsets
+    if nFinalSubs is None or nFinalSubs < 2:
 
-        # Algorithm by Subset input
-        if nFinalSubs is None or nFinalSubs < 2:
+        # Run AstroDrizzle across associations
+        for i, idStr in enumerate(fAssocs):
 
             # Set More Options Based on Number of Files
             _driztype(fAssocs[idStr], asOpts)
@@ -270,14 +284,12 @@ def finaldriz(fileList, pixScl=None, nFinalSubs=None):
             AstroDrizzle(fAssocs[idStr], output=idStr, **asOpts)
 
             # Final WCS
-            if not bool(i):
-                firstImg = glob.glob(idStr + '_dr?.fits')[0]
-                asOpts['final_refimage'] = firstImg
-                with fits.open(firstImg) as fid:
-                    asOpts['final_outnx'] = fid[1].header['NAXIS1']
-                    asOpts['final_outny'] = fid[1].header['NAXIS2']
+            if not bool(i): _refimg(idStr + '_dr?.fits', asOpts)
 
-        else:  # If the user wants to divide up the inputs
+    else:  # If the user wants to divide up the inputs
+
+        # Run AstroDrizzle across associations
+        for i, idStr in enumerate(fAssocs):
 
             # Shuffle Array
             shufList = np.random.permutation(fAssocs[idStr]).tolist()
@@ -295,11 +307,7 @@ def finaldriz(fileList, pixScl=None, nFinalSubs=None):
 
                 # Final WCS
                 if not bool(i) and not bool(j):
-                    firstImg = glob.glob(baseName + '_dr?.fits')[0]
-                    asOpts['final_refimage'] = firstImg
-                    with fits.open(firstImg) as fid:
-                        asOpts['final_outnx'] = fid[1].header['NAXIS1']
-                        asOpts['final_outny'] = fid[1].header['NAXIS2']
+                    _refimg(baseName + '_dr?.fits', asOpts)
 
 
 # --- Main Script -------------------------------------------------------------
