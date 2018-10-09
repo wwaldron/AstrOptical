@@ -207,8 +207,28 @@ def alignimgs(fileList, refCat, updateHdr=False, refCols=(1, 2),
     for fName in glob.iglob('vector*.png'): os.remove(fName)
     for fName in glob.iglob('residuals*.png'): os.remove(fName)
 
+
+# --- Drizzle Type ------------------------------------------------------------
+def _driztype(fileList, asOpts):
+    """Returns the median type and nThresh"""
+
+    # Set Options based on number of files
+    nFiles = len(fileList)
+    asOpts['combine_type'] = 'minmed' if nFiles <= 6 else 'median'
+
+    # Options Based on Median
+    if asOpts['combine_type'] == 'minmed':
+        asOpts['combine_nhigh'] = 0
+    else:
+        asOpts['combine_nhigh'] = 1 + nFiles//10
+        # If the (number of files - combine_nhigh) is even, add another to
+        # nHigh
+        if not ((nFiles - asOpts['combine_nhigh']) % 2):
+            asOpts['combine_nhigh'] += 1
+
+
 # --- Final Drizzle -----------------------------------------------------------
-def finaldriz(fileList, pixScl=None):
+def finaldriz(fileList, pixScl=None, nFinalSubs=None):
     """Drizzles all similar files together"""
 
     # Set the Options
@@ -239,30 +259,46 @@ def finaldriz(fileList, pixScl=None):
     # Run AstroDrizzle
     for i, idStr in enumerate(fAssocs):
 
-        # Set More Options Based on Number of Files
-        nFiles = len(fAssocs[idStr])
-        asOpts['combine_type'] = 'minmed' if nFiles <= 6 else 'median'
+        # Algorithm by Subset input
+        if nFinalSubs is None or nFinalSubs < 2:
 
-        # Options Based on Median
-        if asOpts['combine_type'] == 'minmed':
-            asOpts['combine_nhigh'] = 0
-        else:
-            asOpts['combine_nhigh'] = 1 + nFiles//10
-            # If the (number of files - combine_nhigh) is even, add another to
-            # nHigh
-            if not ((nFiles - asOpts['combine_nhigh']) % 2):
-                asOpts['combine_nhigh'] += 1
+            # Set More Options Based on Number of Files
+            _driztype(fAssocs[idStr], asOpts)
 
-        # Run AstroDrizzle
-        AstroDrizzle(fAssocs[idStr], output=idStr, **asOpts)
+            # Run AstroDrizzle
+            AstroDrizzle(fAssocs[idStr], output=idStr, **asOpts)
 
-        # Final WCS
-        if not bool(i):
-            firstImg = glob.glob(idStr + '_dr?.fits')[0]
-            asOpts['final_refimage'] = firstImg
-            with fits.open(firstImg) as fid:
-                asOpts['final_outnx'] = fid[1].header['NAXIS1']
-                asOpts['final_outny'] = fid[1].header['NAXIS2']
+            # Final WCS
+            if not bool(i):
+                firstImg = glob.glob(idStr + '_dr?.fits')[0]
+                asOpts['final_refimage'] = firstImg
+                with fits.open(firstImg) as fid:
+                    asOpts['final_outnx'] = fid[1].header['NAXIS1']
+                    asOpts['final_outny'] = fid[1].header['NAXIS2']
+
+        else:  # If the user wants to divide up the inputs
+
+            # Shuffle Array
+            shufList = np.random.permutation(fAssocs[idStr]).tolist()
+            shufLists = tuple(shufList[j::nFinalSubs] for j in range(nFinalSubs))
+
+            # Loop through Lists
+            for j, shufList in enumerate(shufLists):
+
+                # Get the Options
+                _driztype(shufList, asOpts)
+
+                # Get the Basename and Run AstroDrizzle
+                baseName = idStr + '-SUB{:d}'.format(j)
+                AstroDrizzle(shufList, output=baseName, **asOpts)
+
+                # Final WCS
+                if not bool(i) and not bool(j):
+                    firstImg = glob.glob(baseName + '_dr?.fits')[0]
+                    asOpts['final_refimage'] = firstImg
+                    with fits.open(firstImg) as fid:
+                        asOpts['final_outnx'] = fid[1].header['NAXIS1']
+                        asOpts['final_outny'] = fid[1].header['NAXIS2']
 
 
 # --- Main Script -------------------------------------------------------------
@@ -288,6 +324,9 @@ if __name__ == '__main__':
                            'verbosity)')
     prsr.add_argument('-p', '--pixscl', metavar='X', type=float, default=None,
                       help='The output pixel scale of AstroDrizzle')
+    prsr.add_argument('-u', '--final-subsets', metavar='X', default=None,
+                      type=int,
+                      help='Number of images to divide final drizzle inputs into')
     verb = prsr.add_mutually_exclusive_group()
     verb.add_argument('-v', '--verbose', action='count', default=0,
                       help='Set the verbosity level')
@@ -378,7 +417,7 @@ if __name__ == '__main__':
         if (args.final_drizzle or
                 input('Run final drizzle [y,n]? ').lower() == 'y'):
             log.info('Running Final Drizzle\n')
-            finaldriz(args.files, args.pixscl)
+            finaldriz(args.files, args.pixscl, args.final_subsets)
 
     # --- Run Clean Up --------------------------------------------------------
     if args.clean:
