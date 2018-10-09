@@ -213,6 +213,7 @@ def finaldriz(fileList, pixScl=None):
 
     # Set the Options
     asOpts = {
+        'wcskey' : 'TWEAK',
         'context' : False,
         'preserve' : False,
         'clean' : True,
