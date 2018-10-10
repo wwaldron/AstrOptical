@@ -264,8 +264,7 @@ def finaldriz(fileList, pixScl=None, nFinalSubs=None):
     for fName in fileList:
         with fits.open(fName) as fid:
             hdr = fid[0].header
-            idStr = '-'.join([hdr['INSTRUME'], hdr['FILTER'],
-                              'Prop{:d}'.format(hdr['PROPOSID'])])
+            idStr = '-'.join([hdr['INSTRUME'], hdr['FILTER']])
             idStr = idStr.upper()
         if idStr not in fAssocs: fAssocs[idStr] = []
         fAssocs[idStr].append(fName)
