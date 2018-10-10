@@ -237,9 +237,8 @@ def _refimg(fileGlob, asOpts):
 
     # Assign Options
     asOpts['final_refimage'] = firstImg
-    with fits.open(firstImg) as fid:
-        asOpts['final_outnx'] = fid[1].header['NAXIS1']
-        asOpts['final_outny'] = fid[1].header['NAXIS2']
+    del asOpts['final_rot']
+    del asOpts['final_scaleNov']
 
 
 # --- Final Drizzle -----------------------------------------------------------
