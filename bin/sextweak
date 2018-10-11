@@ -238,7 +238,7 @@ def _refimg(fileGlob, asOpts):
     # Assign Options
     asOpts['final_refimage'] = firstImg
     del asOpts['final_rot']
-    del asOpts['final_scaleNov']
+    del asOpts['final_scale']
 
 
 # --- Final Drizzle -----------------------------------------------------------
