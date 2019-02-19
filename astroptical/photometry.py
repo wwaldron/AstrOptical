@@ -25,6 +25,9 @@ from photutils           import CircularAperture,       CircularAnnulus
 from photutils           import SkyCircularAperture, SkyCircularAnnulus
 from photutils           import aperture_photometry
 
+# Constants
+LOG_ERR_COEF = 1.0857362047581294  # Float coeff = 2.5 / ln(10)
+
 
 # --- Magnitude ---------------------------------------------------------------
 def magnitude(flux, zeroPoint, galExt=0, apCor=0, kcor=0, distToSrc=10):
@@ -59,10 +62,9 @@ def magerr(flux, fluxErr):
     '''Calculates the magnitude error from the flux and flux error
     '''
 
-    # Float coeff = 2.5 / ln(10)
     # Error Propogation is defined for natural log where photometry is defined
     # for 2.5*log10(flux)
-    return 1.0857362047581294 * fluxErr / flux
+    return LOG_ERR_COEF * fluxErr / flux
 
 
 # --- Drizzle Correction ------------------------------------------------------
