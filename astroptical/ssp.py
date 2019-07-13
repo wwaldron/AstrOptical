@@ -22,7 +22,7 @@ import scipy      as     sp
 import pandas     as     pd
 from   os         import path as p
 import matplotlib.pyplot as plt
-from glob2 import iglob
+from glob import iglob
 
 # Local Imports
 from astroptical.metrics import weuclidean
@@ -546,7 +546,7 @@ def mapspecsrc(fileName, distToSrc=DEFAULT_DIST, redshift=0, sbSpec=None):
     '''
 
     # Get the File Iterator
-    fileIt = iglob(fileName)
+    fileIt = iglob(fileName, recursive=True)
 
     # Read in the Data
     srcs = []
