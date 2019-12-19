@@ -125,5 +125,5 @@ def simpleapphot(fileName,pos,r,rI,rO,frame='image'):
 
     # Get Photometry as ndarray
     phot = cirPhotTab['aperture_sum'].data - \
-           (cirAps.area()/annAps.area())*annPhotTab['aperture_sum'].data
+           (cirAps.area/annAps.area)*annPhotTab['aperture_sum'].data
     return phot
