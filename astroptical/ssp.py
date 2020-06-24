@@ -6,9 +6,6 @@ Created on Sat Sep 16 14:45:35 2017
 @author: wwaldron
 """
 
-# Future
-from   __future__ import division
-
 # Metadata
 __all__ = ['Starburst99Spectrum', 'BpassSpectrum', 'GalevSpectrum']
 
