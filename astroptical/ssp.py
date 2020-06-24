@@ -11,6 +11,7 @@ __all__ = ['Starburst99Spectrum', 'BpassSpectrum', 'GalevSpectrum']
 
 # Classes
 from abc import abstractmethod, ABC
+from os.path import splitext, basename
 
 # Other Imports
 import pysynphot  as     psp
@@ -19,7 +20,7 @@ import scipy      as     sp
 import pandas     as     pd
 from   os         import path as p
 import matplotlib.pyplot as plt
-from glob import iglob
+from glob import iglob, glob
 
 # Local Imports
 from astroptical.metrics import weuclidean
@@ -325,6 +326,26 @@ class MappingsVSpectrum(SpectrumEvolution):
                                        sbSpec)
 
 
+# --- MappingsV Spectrum ------------------------------------------------------
+class CloudySpectrum(SpectrumEvolution):
+    '''Class to hold Cloudy Output'''
+
+    def read(self, fileName):
+        '''Reads the Cloudy files
+
+        Parameters
+        ----------
+        fileName : str
+            A glob pattern for the "cont" files
+
+        '''
+
+        self.fileName = fileName
+        self.spectrumList, self.years = cloudyspecsrc(self.fileName,
+                                                      self.distToSrc,
+                                                      self.redshift)
+
+
 # --- Create a pysynphot source from a pandas dataframe -----------------------
 def sb99specsrc(fileName, distToSrc=DEFAULT_DIST, redshift=0):
     '''Returns the Starburst99 spectrum file as a pysynphot list of sources
@@ -590,3 +611,89 @@ def mapspecsrc(fileName, distToSrc=DEFAULT_DIST, redshift=0, sbSpec=None):
             srcs[i] = mpSrc
 
     return srcs
+
+# --- Read Cloudy Data ------------------------------------------------------ #
+def cloudyspecsrc(dirName, distToSrc=DEFAULT_DIST, redshift=0):
+    '''Returns the MappingsV spectrum files as a pysynphot list of sources
+
+    Parameters
+    ----------
+    dirName : str
+        The glob pattern for the CONT files.
+    distToSrc : float, optional
+        The distance from the observer to the source in [cm]. Do not pass in an
+        argument if total flux is desired.
+
+    Returns
+    -------
+    srcs : list
+        The each element in the list is a
+        pysynphot.spectrum.ArraySourceSpectrum object that corresponds by index
+        to the years in yrs. The units of the object are in
+        flam=[erg/s/cm/cm/A].
+
+    '''
+
+    # Get/Check all the File Names
+    fileNames = sorted(glob(dirName, recursive=True))
+    _chkcloudy(fileNames)
+
+    # Use Pandas to Read in the Tables
+    srcs, yrs = [], []
+    absFluxCor = (4/3)*np.pi*distToSrc*distToSrc
+    for fn in fileNames:
+
+        # Get the Header Line and Check for "#Cont"
+        with open(fn) as fid:
+            cols = fid.readline().rstrip().replace('#Cont  ', '').split('\t')
+
+        # Read in the Table as a Dataframe
+        cldDF = pd.read_table(fn, header=0, names=cols)
+
+        # Get the Data as a PSP Object
+        # Column "nu" is in Angstrom
+        # Column "total" is in erg/s
+        fLam  = cldDF['total'].values / cldDF['nu'].values
+        fLam /= absFluxCor  # Convert to erg/s/cm/cm/Angstrom
+        srcs.append(
+            psp.ArraySpectrum(cldDF['nu'].values, fLam, waveunits='Angstrom',
+                              fluxunits='Flam').redshift(redshift)
+        )
+
+        # Get the Year
+        yr = splitext(basename(fn))[0].split('_t')[-1]
+        yrs.append(float(yr))
+
+    # Sort the Values
+    srcs = [src for _, src in sorted(zip(yrs, srcs), key=lambda pair: pair[0])]
+    yrs.sort()
+
+    # Return
+    return srcs, np.array(yrs)
+
+
+
+# --- Cloudy Checks --------------------------------------------------------- #
+def _chkcloudy(fileNames):
+    '''Checks to make sure the file names are good for Cloudy'''
+
+    # Check to make sure all files have same prefix
+    chk = set(
+        [basename(fn).split('_t.')[0] for fn in fileNames]
+    )
+    if len(chk) > 1:
+        raise ValueError(
+            'Files appear to come from two different simulations. '
+            'The file prefixes are non-similar.', chk
+        )
+    elif not chk:
+        raise ValueError(
+            'No files found according to glob pattern.'
+        )
+
+    # Check to make sure all files are cont files
+    chk = [splitext(fn)[1] != '.cont' for fn in fileNames]
+    if any(chk):
+        raise ValueError(
+            'These files do not appear to be Cloudy "cont" files.'
+        )
