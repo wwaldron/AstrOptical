@@ -381,7 +381,9 @@ def sb99specsrc(fileName, distToSrc=DEFAULT_DIST, redshift=0):
     # have a simpler way right now to parse the data
     assert isinstance(fileName, str), 'fileName must be a string.'
     assert p.exists(fileName),        'File ' + fileName + 'does not exist.'
-    specdf  = pd.read_fwf(fileName,header=5,widths=[11,17,12,13,26])
+    specdf  = pd.read_fwf(
+        fileName, header=3, widths=[11, 17, 12, 13, 26]  # Changed to header=3 since pandas now skips blank rows
+    )
 
     # Convert to Array
     specArr = specdf.values
