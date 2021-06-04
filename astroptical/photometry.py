@@ -26,7 +26,7 @@ from photutils           import SkyCircularAperture, SkyCircularAnnulus
 from photutils           import aperture_photometry
 
 # Constants
-LOG_ERR_COEF = 1.0857362047581294  # Float coeff = 2.5 / ln(10)
+LOG_ERR_COEF = 2.5/np.log(10)  # Float coeff = 2.5 / ln(10)
 
 
 # --- Magnitude ---------------------------------------------------------------
@@ -57,6 +57,16 @@ def zeropoint(photFlam, photPlam):
     return stMagZPt, abMagZpt
 
 
+# --- Calculate Magnitude Error - Scalar --------------------------------------
+def _magerr(flux, fluxErr):
+    '''Calculates the magnitude error from the flux and flux error
+    '''
+
+    # Error Propogation is defined for natural log where photometry is defined
+    # for 2.5*log10(flux)
+    return LOG_ERR_COEF * fluxErr / flux if flux > fluxErr else np.NaN
+
+
 # --- Calculate Magnitude Error -----------------------------------------------
 def magerr(flux, fluxErr):
     '''Calculates the magnitude error from the flux and flux error
@@ -64,7 +74,8 @@ def magerr(flux, fluxErr):
 
     # Error Propogation is defined for natural log where photometry is defined
     # for 2.5*log10(flux)
-    return LOG_ERR_COEF * fluxErr / flux
+    vec_mag_err = np.frompyfunc(_magerr, 2, 1)
+    return vec_mag_err(flux, fluxErr).astype(float)
 
 
 # --- Drizzle Correction ------------------------------------------------------
