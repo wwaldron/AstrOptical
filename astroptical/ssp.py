@@ -416,7 +416,7 @@ def sb99specsrc(fileName, distToSrc=DEFAULT_DIST, redshift=0):
 
 
 # --- Read Equivalent Width Files from SB99 -----------------------------------
-def sb99ewidth(fileName,outscale='linear'):
+def sb99ewidth(fileName, outscale='linear'):
     '''
     '''
 
@@ -425,11 +425,14 @@ def sb99ewidth(fileName,outscale='linear'):
     # have a simpler way right now to parse the data
     assert isinstance(fileName, str), 'fileName must be a string.'
     assert p.exists(fileName),        'File ' + fileName + 'does not exist.'
-    widthDF = pd.read_fwf(fileName,header=5,widths=([14] + 4*[10,9,9]))
+    widthDF = pd.read_fwf(
+        fileName, header=3,
+        widths=([14] + 4*[10,9,9])
+    )
 
     # Change Scales
     if outscale.lower() == 'linear':
-        widthDF.iloc[:,1:] = 10**widthDF.iloc[:,1:]
+        widthDF.iloc[:, 1:] = 10**widthDF.iloc[:, 1:]
 
     return widthDF
 
