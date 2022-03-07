@@ -10,99 +10,91 @@ Created on Sat Sep  2 13:41:08 2017
 from __future__ import division
 
 # Meta
-__all__ = ['cal97','cal00','car89']
-
-# Python
-from warnings import warn
+__all__ = ['cal97', 'cal00', 'car89']
 
 # Numerical Imports
 import numpy as np
-from   numpy import frompyfunc as vec
-
-
-# frompyfuncd Functions
-def cal97(wave,ebv=0.0):
-    '''Calculates reddening according to Calzetti's 1997 Paper
-    '''
-
-    # Function
-    vcal97 = vec(_cal97,2,2)
-
-    return vcal97(wave,ebv)
-
-
-def cal00(wave,ebv=0.0,rvp=4.05):
-    '''Calculates reddening according to Calzetti's 2000 Paper
-    '''
-
-    # Function
-    vcal00 = vec(_cal00,3,2)
-
-    return vcal00(wave,ebv,rvp)
-
-
-def car89(wave,ebv=0.0,rvp=3.1):
-    '''Calculates reddening according to Cardelli's 1989 Paper
-    '''
-
-    # Function
-    vcar89 = vec(_car89,3,2)
-
-    return vcar89(wave,ebv,rvp)
+from numba import vectorize, float64, boolean
 
 
 # --- Calzetti 1997 -----------------------------------------------------------
-def _cal97(wave, ebv=0.0):
+def cal97(wave, ebv=0.0, throwErrors=True):
+
+    k = _cal97(wave, throwErrors)
+    return k, ebv*k
+
+@vectorize(
+    [float64(float64, boolean)],
+    nopython=True,
+    target='parallel'
+)
+def _cal97(wave, throwErrors=True):
     '''Calculates reddening according to Calzetti's 1997 Paper
     '''
 
     if wave < 0.63:
-        if wave < 0.12:
-            warn('Reddening is ill defined below 0.12 microns.', RuntimeWarning)
+        if throwErrors and wave < 0.12:
+            raise ValueError('Reddening is ill defined below 0.12 microns.')
 
         # Calculate k value
         k = 4.88 + 2.656*(-2.156 + 1.509/wave - 0.198/wave/wave +
                           0.011/wave/wave/wave)
 
     else:
-        if wave > 1.0:
-            warn('Reddening is ill defined above 1.00 microns.', RuntimeWarning)
+        if throwErrors and wave > 1.0:
+            raise ValueError('Reddening is ill defined above 1.00 microns.')
 
         # Calculate k value
         k = 1.73 - 0.1/wave + 1.86/wave/wave - 0.48/wave/wave/wave
 
-    red = k * ebv
-
-    return k, red
+    return k
 
 
 # --- Calzetti 2000 -----------------------------------------------------------
-def _cal00(wave, ebv=0.0, rvp=4.05):
+def cal00(wave, ebv=0.0, rvp=4.05, throwErrors=True):
+
+    k = _cal00(wave, rvp, throwErrors)
+    return k, ebv*k
+
+@vectorize(
+    [float64(float64, float64, boolean)],
+    nopython=True,
+    target='parallel'
+)
+def _cal00(wave, rvp=4.05, throwErrors=True):
     '''Calculates reddening according to Calzetti's 2000 Paper
     '''
 
     if wave < 0.63:
-        if wave < 0.12:
-            warn('Reddening is ill defined below 0.12 microns.', RuntimeWarning)
+        if throwErrors and wave < 0.12:
+            raise ValueError('Reddening is ill defined below 0.12 microns.')
 
         # Calculate k value
         k = rvp + 2.659*(-2.156 + 1.509/wave - 0.198/wave/wave +
                          0.011/wave/wave/wave)
 
     else:
-        if wave > 2.20:
-            warn('Reddening is ill defined above 2.20 microns.', RuntimeWarning)
+        if throwErrors and wave > 2.20:
+            raise ValueError('Reddening is ill defined above 2.20 microns.')
 
         # k Value
         k = rvp + 2.659*(-1.857 + 1.04/wave)
 
-    red = k * ebv
-
-    return k, red
+    return k
 
 
 # --- Cardelli 1989 -----------------------------------------------------------
-def _car89(wave, ebv=0.0, rvp=3.1):
+def car89(wave, ebv=0.0, rvp=3.1, throwErrors=True):
+
+    k = _car89(wave, rvp, throwErrors)
+    return k, ebv*k
+
+@vectorize(
+    [float64(float64, float64, boolean)],
+    nopython=True,
+    target='parallel'
+)
+def _car89(wave, rvp=3.1, throwErrors=True):
     '''Cardelli Milky Way reddening (1989)
     '''
 
@@ -111,8 +103,8 @@ def _car89(wave, ebv=0.0, rvp=3.1):
 
     # Calculate a(x) and b(x)
     if x < 1.1:
-        if x < 0.3:
-            warn('Reddening is ill defined below 0.3 inverse microns.', RuntimeWarning)
+        if throwErrors and x < 0.3:
+            raise ValueError('Reddening is ill defined below 0.3 inverse microns.')
 
         # Get a and b
         a =  0.574*np.power(x,1.61)
@@ -142,8 +134,8 @@ def _car89(wave, ebv=0.0, rvp=3.1):
         b = fB - 3.090 + 1.825*x + 1.206/(0.263 + (x - 4.62)**2)
 
     else:
-        if x > 10:
-            warn('Reddening is ill defined above 10 inverse microns.', RuntimeWarning)
+        if throwErrors and x > 10:
+            raise ValueError('Reddening is ill defined above 10 inverse microns.')
 
         # Get a and b
         y = x - 8
@@ -152,6 +144,5 @@ def _car89(wave, ebv=0.0, rvp=3.1):
 
     # Calculate K
     k   = rvp*a + b
-    red = k * ebv
 
-    return k, red
+    return k
