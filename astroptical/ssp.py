@@ -14,7 +14,10 @@ from abc import abstractmethod, ABC
 from os.path import splitext, basename
 
 # Other Imports
-import pysynphot  as     psp
+try:
+    import pysynphot  as psp
+except ModuleNotFoundError:
+    import stsynphot  as psp
 import numpy      as     np
 import scipy      as     sp
 import pandas     as     pd
