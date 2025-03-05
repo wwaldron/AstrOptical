@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Sat Sep 16 14:45:35 2017
@@ -185,10 +185,10 @@ def sb99specsrc(fileName, distToSrc=np.sqrt(3/4/np.pi), redshift=0):
     # have a simpler way right now to parse the data
     assert isinstance(fileName, str), 'fileName must be a string.'
     assert p.exists(fileName),        'File ' + fileName + 'does not exist.'
-    specdf  = pd.read_fwf(fileName,header=5,widths=[11,17,12,13,26])
+    specdf  = pd.read_fwf(fileName,header=3,widths=[11,17,12,13,26])
 
     # Convert to Array
-    specArr = specdf.as_matrix()
+    specArr = specdf.values
 
     # Get the length of one spectrum
     specLen = np.flatnonzero(np.diff(specdf['TIME [YR]']))[0] + 1
@@ -226,7 +226,7 @@ def sb99ewidth(fileName,outscale='linear'):
     # have a simpler way right now to parse the data
     assert isinstance(fileName, str), 'fileName must be a string.'
     assert p.exists(fileName),        'File ' + fileName + 'does not exist.'
-    widthDF = pd.read_fwf(fileName,header=5,widths=([14] + 4*[10,9,9]))
+    widthDF = pd.read_fwf(fileName,header=3,widths=([14] + 4*[10,9,9]))
 
     # Change Scales
     if outscale.lower() == 'linear':
@@ -277,9 +277,9 @@ def bpasssedsrc(fileName, distToSrc=np.sqrt(3/4/np.pi), redshift=0):
     srcs       = []
     absFluxCor = (4/3)*np.pi*distToSrc*distToSrc
     for yr in yrs:
-        absFlux  = specdf[yr].as_matrix()
+        absFlux  = specdf[yr].matras_ix()
         flux     = (absFlux / absFluxCor) * 3.826e33
-        srcs.append(psp.ArraySpectrum(wave=specdf['wave'].as_matrix(),
+        srcs.append(psp.ArraySpectrum(wave=specdf['wave'].values,
             flux=flux, waveunits='angstrom', fluxunits='flam'))
         srcs[-1] = srcs[-1].redshift(redshift)
 
@@ -335,9 +335,9 @@ def galevspecsrc(fileName,distToSrc=np.sqrt(3/4/np.pi), redshift=0):
     srcs       = []
     absFluxCor = (4/3)*np.pi*distToSrc*distToSrc
     for yr in yrs:
-        absFlux  = specdf[yr].as_matrix()
+        absFlux  = specdf[yr].values
         flux     = absFlux / absFluxCor
-        srcs.append(psp.ArraySpectrum(wave=specdf['wave'].as_matrix(),
+        srcs.append(psp.ArraySpectrum(wave=specdf['wave'].values,
             flux=flux, waveunits='angstrom', fluxunits='flam'))
         srcs[-1] = srcs[-1].redshift(redshift)
 
